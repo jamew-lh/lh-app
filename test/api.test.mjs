@@ -43,7 +43,16 @@ test('named exception (Tyler Enck, Paving) can sign in', async () => {
   const r = await login('Enck', '8642');
   assert.equal(r.status, 200);
   assert.equal(r.data.person.name, 'Tyler L. Enck');
-  assert.equal(r.data.person.equipment, false);
+  assert.equal(r.data.person.equipment, true);   // Shop
+});
+
+test('several people with the same last name each sign in with their own PIN', async () => {
+  assert.equal((await login('Smoker', '1111')).data.person.name, 'Gage Smoker');
+  const chad = (await login('Smoker', '2222')).data.person;
+  assert.equal(chad.name, 'Chad M. Smoker');
+  assert.equal(chad.equipment, true);  // Shop
+  assert.equal(chad.pm, true);         // Shop
+  assert.equal((await login('Walker', '1234')).data.person.pm, false);
 });
 
 test('too many wrong tries locks the name for a while', async () => {
@@ -103,7 +112,7 @@ test('parseNumber', () => {
 test('phone list: current Site Contractors with a cell, sorted, no PINs', async () => {
   const { cookie } = await login('Rivera', '4321');
   const r = await call('GET', '/api/phones', { cookie });
-  assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Chen, Lee', 'Enck, Tyler L.', 'Rivera, Tony', 'Walker, James']);
+  assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Chen, Lee', 'Enck, Tyler L.', 'Rivera, Tony', 'Smoker, Chad M.', 'Smoker, Gage', 'Walker, James']);
   assert.ok(r.data.people.every((p) => Object.keys(p).sort().join() === 'cell,name,position'));
 });
 

@@ -8,7 +8,9 @@ bases and never changes them. It runs on Netlify, like the other apps.
 
 - Sign in: **last name + Timecard Pin** (the same PIN as the timecard app)
 - Who can sign in: every **Current Employee** whose Location is **SIte Contractors** and who has a Timecard Pin, plus anyone listed in `extraPeople` in `lib/config.mjs` (currently Tyler Enck)
-- **Equipment Viewer** button: only for positions Management, Office, Superviser / SUP and Foreman
+- **Equipment Viewer** button: only for positions Management, Office, Superviser / SUP, Foreman and Shop
+- **PM Service** button: only for position Shop (set its address as `pmService` in `public/app.js`)
+- People with the same last name (the Smokers) each sign in with their own PIN
 
 ---
 

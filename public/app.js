@@ -9,6 +9,7 @@ const LINKS = {
   shoring: 'https://static1.squarespace.com/static/60084d0846d4c56a53f84f46/t/65d74c5e6738b00cffe11b26/1708608609311/All+Shields+-+tab+data.pdf',
   jobsiteBases: 'https://www.lyonshohl.com/s/__Jobsite-bases_10-08-26.pdf',
   equipment: 'https://lh-equipment.netlify.app/',
+  pmService: '',   // PM Service web address; the button stays hidden until this is filled in
   facebook: 'https://www.facebook.com/lyonshohlsite/',
   instagram: 'https://www.instagram.com/lyons_hohl',
   tiktok: 'https://www.tiktok.com/@lyons_hohl',
@@ -38,6 +39,7 @@ const I = {
   shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 9v11M15 9v11"/></svg>',
   gps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>',
   dozer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="13" height="5" rx="2.5"/><path d="M5 14V9h5l2 5M10 9V6h3"/><path d="M16 12l5 1v6h-3"/></svg>',
+  wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3l9.4-9.4a4 4 0 0 0-2-2z"/><path d="M14.7 6.3l2.5-2.5a4 4 0 0 1 3 3l-2.5 2.5"/></svg>',
   map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>',
   nav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -183,9 +185,10 @@ function showHome() {
         ${tile({ href: LINKS.shoring, icon: 'shield', title: 'Shoring Tab Data', sub: 'All shields', cls: 'ref', external: true })}
         ${tile({ href: LINKS.jobsiteBases, icon: 'gps', title: 'Jobsite Bases', sub: 'GPS base coordinates', cls: 'ref', external: true })}
       </div>
-      ${me.equipment ? `<div class="section-title">Office &amp; Supervisors</div>
+      ${me.equipment || (me.pm && LINKS.pmService) ? `<div class="section-title">Equipment</div>
       <div class="tiles">
-        ${tile({ href: LINKS.equipment, icon: 'dozer', title: 'Equipment Viewer', sub: 'Where every machine is', cls: 'office wide', external: true })}
+        ${me.equipment ? tile({ href: LINKS.equipment, icon: 'dozer', title: 'Equipment Viewer', sub: 'Where every machine is', cls: 'office wide', external: true }) : ''}
+        ${me.pm && LINKS.pmService ? tile({ href: LINKS.pmService, icon: 'wrench', title: 'PM Service', sub: 'Log and look up machine services', cls: 'office wide', external: true }) : ''}
       </div>` : ''}
     </div></main>
     ${footer()}`;
