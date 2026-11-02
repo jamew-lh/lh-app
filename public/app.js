@@ -185,6 +185,10 @@ function showHome() {
         ${tile({ href: LINKS.shoring, icon: 'shield', title: 'Shoring Tab Data', sub: 'All shields', cls: 'ref', external: true })}
         ${tile({ href: LINKS.jobsiteBases, icon: 'gps', title: 'Jobsite Bases', sub: 'GPS base coordinates', cls: 'ref', external: true })}
       </div>
+      ${me.calendarUrl ? `<div class="section-title">Management</div>
+      <div class="tiles">
+        ${tile({ href: me.calendarUrl, icon: 'sun', title: 'Vacation Calendar', sub: 'Who is off, month by month', cls: 'office wide', external: true })}
+      </div>` : ''}
       ${me.equipment || (me.pm && LINKS.pmService) ? `<div class="section-title">Equipment</div>
       <div class="tiles">
         ${me.equipment ? tile({ href: LINKS.equipment, icon: 'dozer', title: 'Equipment Viewer', sub: 'Where every machine is', cls: 'office wide', external: true }) : ''}

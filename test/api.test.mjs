@@ -55,6 +55,19 @@ test('several people with the same last name each sign in with their own PIN', a
   assert.equal((await login('Walker', '1234')).data.person.pm, false);
 });
 
+test('vacation calendar link only for Management, and only when set', async () => {
+  const mgr = 'recEMP0000000011';
+  const r1 = await call('POST', '/api/login', { body: { lastName: 'Boss', pin: '3333' } });
+  assert.equal(r1.data.person.calendarUrl, '');                       // not set in Netlify yet
+  env.VACATION_CALENDAR_URL = 'https://lhtimecard.netlify.app/calendar.html#k=abc';
+  try {
+    assert.equal((await login('Boss', '3333')).data.person.calendarUrl, env.VACATION_CALENDAR_URL);
+    assert.equal((await login('Walker', '1234')).data.person.calendarUrl, '');  // Office
+    assert.equal((await login('Smoker', '2222')).data.person.calendarUrl, ''); // Shop
+  } finally { delete env.VACATION_CALENDAR_URL; }
+  void mgr;
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);
@@ -112,7 +125,7 @@ test('parseNumber', () => {
 test('phone list: current Site Contractors with a cell, sorted, no PINs', async () => {
   const { cookie } = await login('Rivera', '4321');
   const r = await call('GET', '/api/phones', { cookie });
-  assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Chen, Lee', 'Enck, Tyler L.', 'Rivera, Tony', 'Smoker, Chad M.', 'Smoker, Gage', 'Walker, James']);
+  assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Boss, Morgan', 'Chen, Lee', 'Enck, Tyler L.', 'Rivera, Tony', 'Smoker, Chad M.', 'Smoker, Gage', 'Walker, James']);
   assert.ok(r.data.people.every((p) => Object.keys(p).sort().join() === 'cell,name,position'));
 });
 

@@ -10,6 +10,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - Who can sign in: every **Current Employee** whose Location is **SIte Contractors** and who has a Timecard Pin, plus anyone listed in `extraPeople` in `lib/config.mjs` (currently Tyler Enck)
 - **Equipment Viewer** button: only for positions Management, Office, Superviser / SUP, Foreman and Shop
 - **PM Service** button: only for position Shop
+- **Vacation Calendar** button: only for position Management (see step 3)
 - People with the same last name (the Smokers) each sign in with their own PIN
 
 ---
@@ -36,6 +37,9 @@ bases and never changes them. It runs on Netlify, like the other apps.
 |---|---|
 | `AIRTABLE_TOKEN` | the token from step 1 |
 | `SESSION_SECRET` | any long random text, at least 24 characters (use a password generator) |
+| `VACATION_CALENDAR_URL` | the vacation calendar share link from the timecard app (office page → **Vacation calendar** → **Share link** → **Copy**). Optional: without it, the button doesn't show. |
+
+The calendar link is kept here, not in the code, because anyone with it can see the calendar.
 
 Then **Deploys → Trigger deploy → Deploy site** so the app picks them up.
 
