@@ -39,6 +39,13 @@ test('wrong PIN, past employees, Paving and blank PINs cannot sign in', async ()
   assert.equal((await login('Adams', '')).status, 401);
 });
 
+test('named exception (Tyler Enck, Paving) can sign in', async () => {
+  const r = await login('Enck', '8642');
+  assert.equal(r.status, 200);
+  assert.equal(r.data.person.name, 'Tyler L. Enck');
+  assert.equal(r.data.person.equipment, false);
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);
@@ -96,7 +103,7 @@ test('parseNumber', () => {
 test('phone list: current Site Contractors with a cell, sorted, no PINs', async () => {
   const { cookie } = await login('Rivera', '4321');
   const r = await call('GET', '/api/phones', { cookie });
-  assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Chen, Lee', 'Rivera, Tony', 'Walker, James']);
+  assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Chen, Lee', 'Enck, Tyler L.', 'Rivera, Tony', 'Walker, James']);
   assert.ok(r.data.people.every((p) => Object.keys(p).sort().join() === 'cell,name,position'));
 });
 
