@@ -1,0 +1,14 @@
+{
+  "name": "lh-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Lyons & Hohl landing app: job details, phone list and links to the other company apps. Reads Airtable. Hosted on Netlify.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/api.test.mjs",
+    "dev": "node test/dev-server.mjs"
+  }
+}
