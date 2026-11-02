@@ -180,3 +180,25 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 .files svg { width: 20px; height: 20px; flex: none; }
 .note { font-size: 13px; color: var(--muted); margin: 14px 4px 0; }
 #app { flex: 1; display: flex; flex-direction: column; }
+
+/* phone list details (Management / supervisors) */
+.person-wrap { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.person-wrap .person { border: 0; border-radius: 0; }
+.person-wrap.open { border-color: var(--green); box-shadow: 0 4px 14px rgba(0,71,69,.10); }
+.person-tap { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+.person-tap .chev { transition: transform .15s; margin-right: 4px; }
+.person-wrap.open .person-tap .chev { transform: rotate(90deg); }
+.details { border-top: 1px solid var(--line); background: #FAFBFB; padding: 6px 14px 10px; }
+.drow { display: flex; gap: 12px; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 16px; }
+.drow:last-child { border-bottom: 0; }
+.dlabel { width: 112px; flex: none; font-size: 13px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.dval { flex: 1; min-width: 0; line-height: 1.4; }
+.dval .none { color: #98A2A0; font-style: italic; }
+.dval .muted { color: var(--muted); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+.exp { font-size: 14px; margin-left: 4px; }
+.exp.bad { color: var(--bad); font-weight: 700; }
+.exp.warn { color: #B45309; font-weight: 700; }
+.exp.muted { color: var(--muted); }
+.maplink { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 700; text-decoration: none; min-height: 36px; }
+.maplink svg { width: 16px; height: 16px; }

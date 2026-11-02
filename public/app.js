@@ -310,6 +310,46 @@ async function showJob(id) {
 }
 
 // ---- Phones ----
+const fmtDate = (iso) => {
+  if (!iso) return '';
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+};
+function yearsSince(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  const now = new Date();
+  let yrs = now.getFullYear() - y;
+  if (now.getMonth() + 1 < m || (now.getMonth() + 1 === m && now.getDate() < d)) yrs -= 1;
+  return yrs < 1 ? 'less than a year' : `${yrs} year${yrs === 1 ? '' : 's'}`;
+}
+function daysUntil(iso) {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  const t = new Date(); const today = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate());
+  return Math.round((Date.UTC(y, m - 1, d) - today) / 86400000);
+}
+function yesNo(v) {
+  if (/^yes$/i.test(v)) return '<span class="pill on">Yes</span>';
+  if (/^no$/i.test(v)) return '<span class="pill bad">No</span>';
+  return '<span class="none">Not entered</span>';
+}
+function detailsHtml(d) {
+  const row = (label, value) => `<div class="drow"><span class="dlabel">${label}</span><span class="dval">${value}</span></div>`;
+  let med = yesNo(d.medical);
+  if (d.medExp) {
+    const left = daysUntil(d.medExp);
+    const cls = left < 0 ? 'bad' : left <= 30 ? 'warn' : 'muted';
+    med += ` <span class="exp ${cls}">${left < 0 ? 'Expired' : 'Expires'} ${esc(fmtDate(d.medExp))}</span>`;
+  }
+  const addr = [d.address, d.cityStateZip].filter(Boolean).join(', ');
+  return `<div class="details">
+    ${row('Start date', d.hireDate ? `${esc(fmtDate(d.hireDate))} <span class="muted">· ${yearsSince(d.hireDate)}</span>` : '<span class="none">Not entered</span>')}
+    ${row('Driving list', yesNo(d.driving))}
+    ${row('Medical card', med)}
+    ${d.endorsements.length ? row('License', esc(d.endorsements.join(', '))) : ''}
+    ${row('Home address', addr ? `${esc(d.address)}${d.address && d.cityStateZip ? '<br>' : ''}${esc(d.cityStateZip)}<br><a class="maplink" href="${mapsDir(addr)}" target="_blank" rel="noopener">${I.nav}Directions</a>` : '<span class="none">Not entered</span>')}
+  </div>`;
+}
 let phoneQuery = '';
 function initials(name) {
   const [last, first] = String(name).split(',').map((s) => s.trim());
@@ -325,15 +365,26 @@ async function showPhones() {
   try {
     if (!phonesCache || Date.now() - phonesCache.at > FRESH_MS) phonesCache = { at: Date.now(), people: (await api('phones')).people };
   } catch (e) { if (e.message !== 'signed-out') $('#people').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  let openName = null;
   const draw = () => {
     const q = phoneQuery.toLowerCase().trim();
     const list = phonesCache.people.filter((p) => !q || `${p.name} ${p.position}`.toLowerCase().includes(q));
-    $('#people').innerHTML = list.length ? list.map((p) => {
-      const digits = p.cell.replace(/[^\d+]/g, '');
-      return `<div class="person"><span class="avatar">${esc(initials(p.name))}</span>
-        <span class="main"><div class="title">${esc(p.name)}</div><div class="sub">${esc(p.cell)}</div>${p.position ? `<div class="pos">${esc(p.position)}</div>` : ''}</span>
-        <span class="callbtns"><a class="round" href="sms:${digits}" aria-label="Text ${esc(p.name)}">${I.text}</a><a class="round call" href="tel:${digits}" aria-label="Call ${esc(p.name)}">${I.phone}</a></span></div>`;
+    $('#people').innerHTML = list.length ? list.map((p, i) => {
+      const digits = (p.cell || '').replace(/[^\d+]/g, '');
+      const btns = digits ? `<span class="callbtns"><a class="round" href="sms:${digits}" aria-label="Text ${esc(p.name)}">${I.text}</a><a class="round call" href="tel:${digits}" aria-label="Call ${esc(p.name)}">${I.phone}</a></span>` : '';
+      const info = `<span class="avatar">${esc(initials(p.name))}</span>
+        <span class="main"><div class="title">${esc(p.name)}</div><div class="sub">${esc(p.cell || 'No cell phone listed')}</div>${p.position ? `<div class="pos">${esc(p.position)}</div>` : ''}</span>`;
+      if (!p.details) return `<div class="person">${info}${btns}</div>`;
+      const open = openName === p.name;
+      return `<div class="person-wrap${open ? ' open' : ''}"><div class="person">
+          <button class="person-tap" data-i="${i}" aria-expanded="${open}">${info}${I.chev}</button>${btns}</div>
+          ${open ? detailsHtml(p.details) : ''}</div>`;
     }).join('') : '<div class="empty">Nobody matches that search.</div>';
+    $('#people').querySelectorAll('.person-tap').forEach((b) => b.addEventListener('click', () => {
+      const name = list[Number(b.dataset.i)].name;
+      openName = openName === name ? null : name;
+      draw();
+    }));
   };
   draw();
   $('#q').addEventListener('input', (e) => { phoneQuery = e.target.value; draw(); });

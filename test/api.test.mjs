@@ -68,6 +68,24 @@ test('vacation calendar link only for Management, and only when set', async () =
   void mgr;
 });
 
+test('start date, driving list, medical card and address only for Management and supervisors', async () => {
+  const crew = await login('Walker', '1234');               // Office: no
+  const r1 = await call('GET', '/api/phones', { cookie: crew.cookie });
+  assert.ok(r1.data.people.every((p) => !('details' in p)));
+  assert.equal(crew.data.person.details, false);
+  for (const [last, pin] of [['Boss', '3333'], ['Chen', '2468']]) {  // Management, "Superviser"
+    const m = await login(last, pin);
+    assert.equal(m.data.person.details, true);
+    const r = await call('GET', '/api/phones', { cookie: m.cookie });
+    const tony = r.data.people.find((p) => p.name === 'Rivera, Tony');
+    assert.deepEqual(tony.details, {
+      hireDate: '2016-04-11', driving: 'Yes', medical: 'Yes', medExp: '2026-11-20',
+      endorsements: ['CDL A', 'Tanker'], address: '12 Main St', cityStateZip: 'Downingtown, PA 19335',
+    });
+    assert.ok(!JSON.stringify(r.data).includes('3333'));     // never PINs
+  }
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);

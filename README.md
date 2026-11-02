@@ -11,6 +11,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **Equipment Viewer** button: only for positions Management, Office, Superviser / SUP, Foreman and Shop
 - **PM Service** button: only for position Shop
 - **Vacation Calendar** button: only for position Management (see step 3)
+- **Employee details in the phone list** (start date, driving list, medical card + expiration, license endorsements, home address): only Management and Superviser / SUP. Tap a name to open them. Other people's phones never receive this information.
 - People with the same last name (the Smokers) each sign in with their own PIN
 
 ---

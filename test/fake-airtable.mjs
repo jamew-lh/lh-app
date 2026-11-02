@@ -2,13 +2,16 @@
 // Names and phone numbers here are made up.
 import { EMPLOYEES as E, JOBS as J } from '../lib/config.mjs';
 
-const emp = (id, name, pin, position, cell, status = 'Current Employee', location = 'SIte Contractors') => ({
-  id, fields: { [E.f.name]: name, [E.f.pin]: pin, [E.f.position]: { name: position }, [E.f.status]: { name: status }, [E.f.location]: { name: location }, [E.f.cell]: cell },
+const emp = (id, name, pin, position, cell, status = 'Current Employee', location = 'SIte Contractors', more = {}) => ({
+  id, fields: { [E.f.name]: name, [E.f.pin]: pin, [E.f.position]: { name: position }, [E.f.status]: { name: status }, [E.f.location]: { name: location }, [E.f.cell]: cell, ...more },
 });
 
 export const EMPLOYEE_RECORDS = [
   emp('recEMP0000000001', 'Walker, James', '1234', 'Office', '(610) 555-0101'),
-  emp('recEMP0000000002', 'Rivera, Tony', '4321', 'Operator', '(610) 555-0102'),
+  emp('recEMP0000000002', 'Rivera, Tony', '4321', 'Operator', '(610) 555-0102', 'Current Employee', 'SIte Contractors', {
+    [E.f.hireDate]: '2016-04-11', [E.f.driving]: { name: 'Yes' }, [E.f.medical]: { name: 'Yes' }, [E.f.medExp]: '2026-11-20',
+    [E.f.endorsements]: [{ name: 'CDL A' }, { name: 'Tanker' }], [E.f.address]: '12 Main St', [E.f.cityStateZip]: 'Downingtown, PA 19335',
+  }),
   emp('recEMP0000000003', 'Baker, Sam', '5555', 'Foreman', '(610) 555-0103'),
   emp('recEMP0000000004', 'Old, Former', '9999', 'Laborer', '(610) 555-0104', 'Past Employee'),
   emp('recEMP0000000005', 'Paver, Pat', '7777', 'Operator', '(610) 555-0105', 'Current Employee', 'Paving'),
