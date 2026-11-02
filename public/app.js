@@ -9,7 +9,7 @@ const LINKS = {
   shoring: 'https://static1.squarespace.com/static/60084d0846d4c56a53f84f46/t/65d74c5e6738b00cffe11b26/1708608609311/All+Shields+-+tab+data.pdf',
   jobsiteBases: 'https://www.lyonshohl.com/s/__Jobsite-bases_10-08-26.pdf',
   equipment: 'https://lh-equipment.netlify.app/',
-  pmService: '',   // PM Service web address; the button stays hidden until this is filled in
+  pmService: 'https://lh-service.netlify.app/',
   facebook: 'https://www.facebook.com/lyonshohlsite/',
   instagram: 'https://www.instagram.com/lyons_hohl',
   tiktok: 'https://www.tiktok.com/@lyons_hohl',
