@@ -26,6 +26,32 @@ const LINKS = {
 };
 
 // ---------------------------------------------------------------------------
+// OUR VALUES — shown on the home screen; tap one for the details. Edit wording here.
+// ---------------------------------------------------------------------------
+const MISSION = 'To be the contractor our people grow with, our clients trust, and our community is better for having.';
+const VALUES = [
+  {
+    name: 'People First', icon: 'vPeople',
+    text: 'Our people come before the project. Every crew member matters, everyone goes home safe, and we build people as much as we build projects.',
+    looks: ['Stop the work if something isn’t safe', 'Look out for the person next to you', 'Help a newer hand learn the job'],
+  },
+  {
+    name: 'Built With Pride', icon: 'vPride',
+    text: 'Honest, high-quality site work and paving that southeastern PA has counted on since 1978. If our name is on it, it’s done right.',
+    looks: ['Do it right the first time', 'Leave the site better than you found it', 'Take care of the equipment like it’s yours'],
+  },
+  {
+    name: 'Own It', icon: 'vOwn',
+    text: 'Leadership is a behavior, not a title. If you see it, you own it — the good work and the mistakes.',
+    looks: ['Speak up early when something’s wrong', 'Fix the small stuff without being asked', 'Finish what you start'],
+  },
+  {
+    name: 'Honesty Wins', icon: 'vHonest',
+    text: 'We tell the truth to our crews, our clients and each other, even when it’s hard. Clear, honest communication keeps people safe and jobs on track.',
+    looks: ['Report near misses and mistakes', 'Say what you mean and keep your word', 'Give a straight answer, good news or bad'],
+  },
+];
+
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const app = $('#app');
@@ -54,6 +80,10 @@ const I = {
   pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
   report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><rect x="9" y="2.5" width="6" height="4" rx="1"/><path d="M8 13l3 3 5-6"/></svg>',
   bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
+  vPeople: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.6"/><path d="M16 14.2a5 5 0 0 1 5.5 5.3"/></svg>',
+  vPride: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.5 6 .8-4.4 4.1 1.1 6L12 16.6 6.7 19.4l1.1-6L3.4 9.3l6-.8z"/></svg>',
+  vOwn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0"/><path d="M6.5 11h11v4a5.5 5.5 0 0 1-11 0z"/><path d="M12 14v2"/></svg>',
+  vHonest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11l3-3a2 2 0 0 1 2.8 0L15 10l3-1 3 3-6.5 6.5a2 2 0 0 1-2.8 0L3 9l3-3z"/></svg>',
   car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
   camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -130,6 +160,8 @@ function subBar(title) {
 function footer() {
   const s = (k, label) => `<a href="${LINKS[k]}" target="_blank" rel="noopener" aria-label="${label}">${I[k]}</a>`;
   return `<footer><div class="wrap">
+    <div class="fvalues"><div class="follow">Our Mission</div><q>${esc(MISSION)}</q>
+      <div class="pills">${VALUES.map((v, i) => `<button class="vpill" data-value="${i}">${esc(v.name)}</button>`).join('')}</div></div>
     <div class="follow">Follow Lyons &amp; Hohl</div>
     <div class="social">${s('facebook', 'Facebook')}${s('instagram', 'Instagram')}${s('tiktok', 'TikTok')}${s('linkedin', 'LinkedIn')}</div>
     <div class="fine">Pride In Our People. Pride In Our Work.</div>
@@ -189,6 +221,8 @@ function showHome() {
       <p>Everything you need for the jobsite, in one place.</p>
     </div></section>
     <main><div class="wrap">
+      <div class="section-title">Our Values</div>
+      <div class="vgrid">${VALUES.map((v, i) => `<button class="vtile" data-value="${i}"><span class="vi">${I[v.icon]}</span><b>${esc(v.name)}</b></button>`).join('')}</div>
       <div class="section-title">Everyday</div>
       <div class="tiles">
         ${tile({ go: 'jobs', icon: 'jobs', title: 'Job Details', sub: 'Location, supervisor, hospital, police, fire' })}
@@ -514,6 +548,31 @@ function route() {
   window.scrollTo(0, 0);
 }
 
+// ---- one value, in a sheet that slides up (swipe through with the arrows) ----
+function showValue(i) {
+  document.querySelector('.sheet-back.value-back')?.remove();
+  const v = VALUES[i];
+  const back = document.createElement('div');
+  back.className = 'sheet-back value-back';
+  back.innerHTML = `<div class="sheet value-sheet" role="dialog" aria-modal="true" aria-labelledby="vTitle">
+      <div class="vs-top"><span class="vs-ic">${I[v.icon]}</span><div><div class="eyebrow">Our values · ${i + 1} of ${VALUES.length}</div><h2 id="vTitle">${esc(v.name)}</h2></div></div>
+      <p class="vs-text">${esc(v.text)}</p>
+      <div class="vs-looks"><div class="dlabel">What it looks like on the job</div><ul>${v.looks.map((l) => `<li>${esc(l)}</li>`).join('')}</ul></div>
+      <div class="vs-nav">
+        <button class="btn btn-cancel" data-vgo="${(i + VALUES.length - 1) % VALUES.length}" aria-label="Previous value">${I.back}</button>
+        <div class="vs-dots">${VALUES.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+        <button class="btn btn-cancel" data-vgo="${(i + 1) % VALUES.length}" aria-label="Next value"><span class="flip">${I.back}</span></button>
+      </div>
+      <button class="btn btn-green vs-close">Close</button>
+    </div>`;
+  back.addEventListener('click', (e) => {
+    const go = e.target.closest('[data-vgo]');
+    if (go) { showValue(Number(go.dataset.vgo)); return; }
+    if (e.target === back || e.target.closest('.vs-close')) back.remove();
+  });
+  document.body.appendChild(back);
+}
+
 // ---- 911: always ask first, so nobody calls by accident ----
 function confirm911() {
   const back = document.createElement('div');
@@ -542,6 +601,8 @@ async function refreshNow(btn) {
 app.addEventListener('click', (e) => {
   const r = e.target.closest('[data-refresh]');
   if (r) { e.preventDefault(); refreshNow(r); return; }
+  const v = e.target.closest('[data-value]');
+  if (v) { e.preventDefault(); showValue(Number(v.dataset.value)); return; }
   const n = e.target.closest('[data-911]');
   if (n) { e.preventDefault(); confirm911(); return; }
   const t = e.target.closest('[data-go]');
