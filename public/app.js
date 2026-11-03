@@ -40,6 +40,7 @@ const I = {
   gps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>',
   dozer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="13" height="5" rx="2.5"/><path d="M5 14V9h5l2 5M10 9V6h3"/><path d="M16 12l5 1v6h-3"/></svg>',
   wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3l9.4-9.4a4 4 0 0 0-2-2z"/><path d="M14.7 6.3l2.5-2.5a4 4 0 0 1 3 3l-2.5 2.5"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>',
   car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
   camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -104,7 +105,7 @@ function playIntro() {
 
 // ------------------------------- Views -------------------------------------
 function bar(inner) {
-  return `<header class="bar"><div class="wrap">${inner}</div></header>`;
+  return `<header class="bar"><div class="wrap">${inner}<button class="refresh" data-refresh aria-label="Refresh" title="Get the latest changes">${I.refresh}</button></div></header>`;
 }
 function homeBar() {
   return bar(`<img class="logo" src="logo.svg" alt="Lyons &amp; Hohl Site Contractors"><span class="spacer"></span><button class="linkbtn" id="signout">Sign out</button>`);
@@ -341,13 +342,13 @@ function showAccident() {
     <section class="acc-head"><div class="wrap">
       <div class="eyebrow">In case of vehicle accident</div>
       <h2>Stay calm. Work through these steps.</h2>
-      <a class="btn btn-911" href="tel:911">${I.phone}Anyone hurt? Call 911</a>
+      <button class="btn btn-911" data-911>${I.phone}Anyone hurt? Call 911</button>
     </div></section>
     <main><div class="wrap"><ol class="steps">
       ${step(1, 'Check yourself', '<p>Are you okay? Check your passengers too.</p>')}
       ${step(2, 'Check the other driver', '<p>Are they okay? Check their passengers too.</p>')}
       ${step(3, 'Call for help', `<div class="split">
-          <div class="opt bad"><b>Any injuries</b><p>Call 911 immediately.</p><a class="btn btn-red" href="tel:911">${I.phone}Call 911</a></div>
+          <div class="opt bad"><b>Any injuries</b><p>Call 911 immediately.</p><button class="btn btn-red" data-911>${I.phone}Call 911</button></div>
           <div class="opt"><b>No visible injuries</b><p>Call the local police to the scene and <strong>get an incident / case number</strong>.</p></div>
         </div>`)}
       ${step(4, 'Take pictures', `<p>Tap each one as you get it.</p><div class="checks">${ACCIDENT.photos.map(([t, d], i) => `
@@ -465,7 +466,36 @@ function route() {
   window.scrollTo(0, 0);
 }
 
+// ---- 911: always ask first, so nobody calls by accident ----
+function confirm911() {
+  const back = document.createElement('div');
+  back.className = 'sheet-back';
+  back.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="s911">
+      <div class="sheet-ic">${I.phone}</div>
+      <h2 id="s911">Call 911?</h2>
+      <p>Only for an emergency or if anyone is hurt.</p>
+      <a class="btn btn-red" href="tel:911" id="yes911">Yes, call 911</a>
+      <button class="btn btn-cancel" id="no911">Cancel</button>
+    </div>`;
+  const close = () => back.remove();
+  back.addEventListener('click', (e) => { if (e.target === back || e.target.id === 'no911') close(); });
+  back.querySelector('#yes911').addEventListener('click', () => setTimeout(close, 300));
+  document.body.appendChild(back);
+  back.querySelector('#no911').focus();
+}
+
+// ---- Refresh: get the latest from Airtable (and the newest version of the app) without signing out ----
+async function refreshNow(btn) {
+  btn.classList.add('spin'); btn.disabled = true;
+  try { await fetch('/api/me?fresh=1', { credentials: 'same-origin', cache: 'no-store' }); } catch { /* offline: reload anyway */ }
+  location.reload();
+}
+
 app.addEventListener('click', (e) => {
+  const r = e.target.closest('[data-refresh]');
+  if (r) { e.preventDefault(); refreshNow(r); return; }
+  const n = e.target.closest('[data-911]');
+  if (n) { e.preventDefault(); confirm911(); return; }
   const t = e.target.closest('[data-go]');
   if (!t) return;
   e.preventDefault();

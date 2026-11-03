@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { handle } from '../lib/app.mjs';
-import { clearCache } from '../lib/store.mjs';
+import { clearCache, resetForceFresh } from '../lib/store.mjs';
 import { resetThrottle } from '../lib/auth.mjs';
 import { parseNumber } from '../lib/jobs.mjs';
 import { fakeFetch } from './fake-airtable.mjs';
@@ -9,7 +9,7 @@ import { fakeFetch } from './fake-airtable.mjs';
 const env = { AIRTABLE_TOKEN: 'patTEST', SESSION_SECRET: 'x'.repeat(32) };
 const BASE = 'https://lh.test';
 
-beforeEach(() => { clearCache(); resetThrottle(); });
+beforeEach(() => { clearCache(); resetThrottle(); resetForceFresh(); });
 
 async function call(method, path, { body, cookie, fetchImpl = fakeFetch() } = {}) {
   const headers = {};
@@ -84,6 +84,22 @@ test('start date, driving list, medical card and address only for Management and
     });
     assert.ok(!JSON.stringify(r.data).includes('3333'));     // never PINs
   }
+});
+
+test('refresh re-reads Airtable, only when signed in, at most every 15 seconds', async () => {
+  const f = fakeFetch();
+  const r = await call('POST', '/api/login', { body: { lastName: 'Rivera', pin: '4321' }, fetchImpl: f });
+  const cookie = r.setCookie.split(';')[0];
+  const before = f.calls.length;
+  await call('GET', '/api/me', { cookie, fetchImpl: f });
+  assert.equal(f.calls.length, before);                       // cached
+  await call('GET', '/api/me?fresh=1', { cookie, fetchImpl: f });
+  assert.ok(f.calls.length > before);                         // re-read
+  const after = f.calls.length;
+  await call('GET', '/api/me?fresh=1', { cookie, fetchImpl: f });
+  assert.equal(f.calls.length, after);                        // throttled
+  resetForceFresh();
+  assert.equal((await call('GET', '/api/me?fresh=1', { fetchImpl: f })).status, 401);
 });
 
 test('too many wrong tries locks the name for a while', async () => {

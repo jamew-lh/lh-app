@@ -14,6 +14,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **Employee details in the phone list** (start date, driving list, medical card + expiration, license endorsements, home address): only Management and Superviser / SUP. Tap a name to open them. Other people's phones never receive this information.
 - **Phone list:** Site Office and HR Cell are pinned at the top (`phoneListCompany` in `lib/config.mjs`); people listed in `phoneListHide` are left off the list but can still sign in
 - **In Case of Vehicle Accident** (red button on the home screen): step-by-step page. Names, numbers and the photo list are in `ACCIDENT` in `public/app.js`
+- **911** buttons never dial straight away: they open a "Call 911?" confirmation first
 - People with the same last name (the Smokers) each sign in with their own PIN
 
 ---
@@ -72,7 +73,7 @@ It opens full-screen with the L&H icon.
 - **Job order:** newest year first; inside a year, highest last-three-digits first,
   then that year's `000 X__` jobs. Rows whose Number isn't a number (VACATION,
   SHOP TIME, ABSENT, …) are hidden. See `lib/jobs.mjs`.
-- Airtable changes show in the app within about 5 minutes.
+- Airtable changes show in the app within about 5 minutes, or right away when someone taps the **refresh** button (top right). Refresh also loads the newest version of the app; nobody has to sign out.
 
 ## Signing people out
 
