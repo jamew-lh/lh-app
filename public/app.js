@@ -208,10 +208,10 @@ function showHome() {
         ${me.incidents?.view ? `<button class="tile safety-tile" data-go="incidents"><span class="ic">${I.report}</span><span class="txt"><b>Incident Report</b><small>${me.incidents.file ? 'Fill out a loss incident investigation report' : 'Review and sign incident reports'}</small></span>${I.chev}</button>` : ''}
       </div>
       ${me.supervisor ? `<div class="section-title">Supervisors</div>
-      <div class="linklist">
-        <div class="linklist-head"><span class="ic">${I.codes}</span><span><b>E&amp;S Reports</b><small>Erosion &amp; sediment inspection forms</small></span></div>
+      <details class="linklist">
+        <summary class="linklist-head"><span class="ic">${I.codes}</span><span class="txt"><b>E&amp;S Reports</b><small>Pick a job · ${LINKS.esReports.length} forms</small></span>${I.chev}</summary>
         ${LINKS.esReports.map(([name, url]) => `<a class="linkrow" href="${url}" target="_blank" rel="noopener"><span>${esc(name)}</span>${I.ext}</a>`).join('')}
-      </div>` : ''}
+      </details>` : ''}
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">
         ${tile({ href: me.calendarUrl, icon: 'sun', title: 'Vacation Calendar', sub: 'Who is off, month by month', cls: 'office wide', external: true })}

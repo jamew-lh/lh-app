@@ -406,3 +406,11 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 .ulinks .btn.call { width: 100%; justify-content: flex-start; }
 .ulinks .btn.call span { flex: 1; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
 .ulinks .btn.call small { font-weight: 500; color: #CFE2DE; white-space: nowrap; }
+
+details.linklist > summary { list-style: none; cursor: pointer; border-bottom: 0; background: #fff; }
+details.linklist > summary::-webkit-details-marker { display: none; }
+details.linklist > summary .txt { flex: 1; }
+details.linklist > summary .chev { transition: transform .15s; }
+details.linklist[open] > summary { border-bottom: 1px solid var(--line); background: #FAFBFB; }
+details.linklist[open] > summary .chev { transform: rotate(90deg); }
+details.linklist[open] { border-color: var(--green); }
