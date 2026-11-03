@@ -8,7 +8,10 @@
     "node": ">=18"
   },
   "scripts": {
-    "test": "node --test test/api.test.mjs",
+    "test": "node --test test/api.test.mjs test/incidents.test.mjs",
     "dev": "node test/dev-server.mjs"
+  },
+  "dependencies": {
+    "pdf-lib": "1.17.1"
   }
 }

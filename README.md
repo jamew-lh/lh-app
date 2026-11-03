@@ -23,8 +23,9 @@ bases and never changes them. It runs on Netlify, like the other apps.
 
 1. Go to <https://airtable.com/create/tokens> and click **Create new token**.
 2. Name it `L&H App`.
-3. **Scopes:** add only `data.records:read`.
-4. **Access:** add these two bases: **Emloyees** and **Job Name List**.
+3. **Scopes:** add `data.records:read` and `data.records:write`.
+4. **Access:** add these three bases: **Emloyees**, **Job Name List** and **Safety**.
+   The app only ever writes to the **Safety** base (incident reports); it only reads the other two.
 5. Click **Create token** and copy it. You'll paste it into Netlify in step 3.
    Don't email it or paste it anywhere else.
 
@@ -41,6 +42,8 @@ bases and never changes them. It runs on Netlify, like the other apps.
 |---|---|
 | `AIRTABLE_TOKEN` | the token from step 1 |
 | `SESSION_SECRET` | any long random text, at least 24 characters (use a password generator) |
+| `TEXTMAGIC_USERNAME` | same as the timecard app: your TextMagic username (for incident report texts) |
+| `TEXTMAGIC_API_KEY` | same as the timecard app (TextMagic → Settings → API) |
 | `VACATION_CALENDAR_URL` | the vacation calendar share link from the timecard app (office page → **Vacation calendar** → **Share link** → **Copy**). Optional: without it, the button doesn't show. |
 
 The calendar link is kept here, not in the code, because anyone with it can see the calendar.
@@ -84,3 +87,23 @@ It opens full-screen with the L&H icon.
 
 `npm run dev`, then open <http://localhost:8899>. It uses made-up data; sign in
 as `Walker` / `1234`. `npm test` runs the checks.
+
+## Incident reports (Safety → Incident Report)
+
+The paper *Lyons Hohl Loss Incident Investigation Report* as a 6-step form on the phone,
+with photos and a finger signature. Saved in the **Safety** base → **Incident Reports**.
+
+- **Who fills it out:** Superviser / SUP, Foreman, Management. Also reachable from step 7
+  of the vehicle accident page (Automobile is pre-picked).
+- **Who sees reports:** Management and supervisors see all; foremen see the ones they filed;
+  James Woodard and Lisamarie Grafstrom see all.
+- **Saved on the phone as they go** (including photos) — a dropped signal doesn't lose anything;
+  "Try again" picks up where it stopped.
+- **When sent:** texts with a link go to Bob Arment, James Woodard and the HR cell (TextMagic),
+  and Airtable emails jamesw@ and pattim@ (automation **Email: new incident report** in the
+  Safety base — it must be turned on in Airtable).
+- **Sign-off:** Supervisor (any Superviser / SUP / Management), Safety Coordinator (James Woodard),
+  Safety Committee (Lisamarie Grafstrom). When all three sign, the status becomes **Closed**.
+- **Office only:** Drug test, Alcohol test and Office Notes (Management, James, Lisa).
+- **Download PDF** on any report: laid out like the paper form, signatures included, photos on extra pages.
+- Settings (who files / reviews / gets texts): `SAFETY` in `lib/config.mjs`.

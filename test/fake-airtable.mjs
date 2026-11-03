@@ -1,6 +1,6 @@
 // A stand-in for the Airtable API, for tests and the local preview.
 // Names and phone numbers here are made up.
-import { EMPLOYEES as E, JOBS as J } from '../lib/config.mjs';
+import { EMPLOYEES as E, JOBS as J, SAFETY as S } from '../lib/config.mjs';
 
 const emp = (id, name, pin, position, cell, status = 'Current Employee', location = 'SIte Contractors', more = {}) => ({
   id, fields: { [E.f.name]: name, [E.f.pin]: pin, [E.f.position]: { name: position }, [E.f.status]: { name: status }, [E.f.location]: { name: location }, [E.f.cell]: cell, ...more },
@@ -21,6 +21,9 @@ export const EMPLOYEE_RECORDS = [
   emp('recEMP0000000010', 'Smoker, Chad M.', '2222', 'Shop', '(610) 555-0110'),
   emp('recEMP0000000011', 'Boss, Morgan', '3333', 'Management', '(610) 555-0111'),
   emp('recX7mle94324fL0y', 'Korth, Brittany', '4444', 'Office', '(610) 555-0112'),
+  emp('recu5oe4hLAB7KXLJ', 'Woodard, James L.', '6060', 'Management', '(610) 858-4549'),
+  emp('recb761dYQ0WyxkaE', 'Grafstrom, Lisamarie C.', '7070', 'Office', '(610) 574-0348'),
+  emp('recIwytS3JrkBVb12', 'Arment, Leon R.', '8080', 'Management', '(610) 636-7289'),
   emp('recbAiVcHKoqqVXYZ', 'Enck, Tyler L.', '8642', 'Shop', '(610) 555-0108', 'Current Employee', 'Paving'),
 ];
 
@@ -56,13 +59,50 @@ export const JOB_RECORDS = [
   job('recJOB0000000014', 'Odd number', '12345'),
 ];
 
+// Safety base: an in-memory table so reports can be created, read, updated and given files.
+const TINY_JPG = 'https://fake.airtableusercontent.com/photo.jpg';
 export function fakeFetch({ fail = false } = {}) {
   const calls = [];
-  const fn = async (url) => {
+  const texts = [];
+  const safety = new Map();
+  let nextNum = 1;
+  let nextId = 1;
+  const json = (data, status = 200) => new Response(JSON.stringify(data), { status });
+  const fn = async (url, opts = {}) => {
     calls.push(url);
+    const method = opts.method || 'GET';
+    if (url.startsWith('https://rest.textmagic.com/')) { texts.push(JSON.parse(opts.body)); return json({ id: 1 }); }
+    if (url === TINY_JPG) return new Response(Buffer.from(TINY_JPG_BYTES, 'base64'), { status: 200 });
     if (fail) return new Response('{"error":"NOT_AUTHORIZED"}', { status: 403 });
     const u = new URL(url);
-    const [, , base, table] = u.pathname.split('/');
+    if (u.host === 'content.airtable.com') {
+      const [, , base, rec, field] = u.pathname.split('/');
+      const r = safety.get(rec);
+      if (base !== S.base || !r) return json({}, 404);
+      const b = JSON.parse(opts.body);
+      r.fields[field] = [...(r.fields[field] || []), { id: `att${nextId++}`, url: TINY_JPG, filename: b.filename, type: b.contentType, thumbnails: { large: { url: TINY_JPG } } }];
+      return json({ id: rec, fields: r.fields });
+    }
+    const [, , base, table, rec] = u.pathname.split('/');
+    if (base === S.base && table === S.table) {
+      if (method === 'POST') {
+        const b = JSON.parse(opts.body);
+        const id = `recINC${String(nextId++).padStart(11, '0')}`;
+        const fields = { ...b.fields, [S.f.number]: nextNum++ };
+        for (const [k, v] of Object.entries(fields)) if (v == null || v === '') delete fields[k];
+        safety.set(id, { id, fields });
+        return json({ id, fields });
+      }
+      if (method === 'PATCH') {
+        const r = safety.get(rec); if (!r) return json({}, 404);
+        const b = JSON.parse(opts.body);
+        for (const [k, v] of Object.entries(b.fields)) { if (v == null || v === '') delete r.fields[k]; else r.fields[k] = v; }
+        return json({ id: rec, fields: r.fields });
+      }
+      if (rec) { const r = safety.get(rec); return r ? json(r) : json({}, 404); }
+      // selects come back as names in this fake; the app handles both
+      return json({ records: [...safety.values()] });
+    }
     const records = base === E.base && table === E.table ? EMPLOYEE_RECORDS
       : base === J.base && table === J.table ? JOB_RECORDS : null;
     if (!records) return new Response('{}', { status: 404 });
@@ -73,5 +113,10 @@ export function fakeFetch({ fail = false } = {}) {
     return new Response(JSON.stringify({ records: page, offset: next }), { status: 200 });
   };
   fn.calls = calls;
+  fn.texts = texts;
+  fn.safety = safety;
   return fn;
 }
+
+// 1x1 white JPEG
+export const TINY_JPG_BYTES = '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCAAeACgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDeooorxj0wooooAKKKKACiiigAooooAKKKKAP/2Q==';

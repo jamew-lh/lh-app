@@ -1,4 +1,5 @@
 // Lyons & Hohl landing app.
+import { initIncidents, showIncidents, showIncidentForm, showIncident } from './incident.js';
 // ---------------------------------------------------------------------------
 // LINKS — edit these to change where the buttons go.
 // ---------------------------------------------------------------------------
@@ -41,6 +42,9 @@ const I = {
   dozer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="13" height="5" rx="2.5"/><path d="M5 14V9h5l2 5M10 9V6h3"/><path d="M16 12l5 1v6h-3"/></svg>',
   wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3l9.4-9.4a4 4 0 0 0-2-2z"/><path d="M14.7 6.3l2.5-2.5a4 4 0 0 1 3 3l-2.5 2.5"/></svg>',
   refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 21v-5h-5"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
+  report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><rect x="9" y="2.5" width="6" height="4" rx="1"/><path d="M8 13l3 3 5-6"/></svg>',
   car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
   camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -192,6 +196,7 @@ function showHome() {
       <div class="section-title">Safety</div>
       <div class="safety">
         <button class="alert-tile" data-go="accident"><span class="ic">${I.car}</span><span class="txt"><b>In Case of Vehicle Accident</b><small>What to do, step by step</small></span>${I.chev}</button>
+        ${me.incidents?.view ? `<button class="tile safety-tile" data-go="incidents"><span class="ic">${I.report}</span><span class="txt"><b>Incident Report</b><small>${me.incidents.file ? 'Fill out a loss incident investigation report' : 'Review and sign incident reports'}</small></span>${I.chev}</button>` : ''}
       </div>
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">
@@ -360,6 +365,9 @@ function showAccident() {
       ${step(6, 'Fill out the Pink Form', `<p>Write up the incident on the <strong>Pink Form</strong> as soon as you can.</p>
           <ul class="ticks"><li><strong>Text a picture</strong> of it to ${esc(ACCIDENT.pinkFormText)}</li><li>Turn the <strong>original</strong> in to the main office</li></ul>
           <a class="btn btn-green" href="sms:${tel(ACCIDENT.pinkFormText)}">${I.camera}Text a photo of the Pink Form</a>`)}
+      ${step(7, 'Incident report', me.incidents?.file
+        ? `<p>Supervisors, foremen and management: fill out the online incident report. You can add the photos you just took.</p><button class="btn btn-red" data-go="incident-new/auto">${I.report}Start an incident report</button>`
+        : '<p>Let your supervisor or foreman know so they can fill out the incident report.</p>')}
     </ol></div></main>${footer()}`;
   app.querySelectorAll('.checkrow').forEach((b) => b.addEventListener('click', () => {
     const i = Number(b.dataset.photo);
@@ -457,6 +465,8 @@ async function showPhones() {
   $('#q').addEventListener('input', (e) => { phoneQuery = e.target.value; draw(); });
 }
 
+initIncidents({ app, api, esc, I, bar, footer, me: () => me, loadJobs });
+
 // ------------------------------- Router ------------------------------------
 function route() {
   if (!me) return showLogin();
@@ -465,6 +475,9 @@ function route() {
   if (h.startsWith('job/')) return showJob(h.slice(4));
   if (h === 'phones') return showPhones();
   if (h === 'accident') return showAccident();
+  if (h === 'incidents') return showIncidents();
+  if (h.startsWith('incident-new')) return showIncidentForm(h.split('/')[1] || '');
+  if (h.startsWith('incident/')) return showIncident(h.slice(9));
   showHome();
   window.scrollTo(0, 0);
 }
