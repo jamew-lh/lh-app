@@ -400,3 +400,9 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 .linkrow:first-of-type { border-top: 0; }
 .linkrow:active { background: var(--ground); }
 .linkrow .ext { position: static; width: 18px; height: 18px; color: #A3AFAC; flex: none; }
+
+.card.utility h3 { color: #A15C00; } .card.utility h3 .dot { background: #FEF3C7; color: #A15C00; }
+.ulinks { flex-direction: column; }
+.ulinks .btn.call { width: 100%; justify-content: flex-start; }
+.ulinks .btn.call span { flex: 1; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.ulinks .btn.call small { font-weight: 500; color: #CFE2DE; white-space: nowrap; }

@@ -53,6 +53,7 @@ const I = {
   mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
   pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
   report: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><rect x="9" y="2.5" width="6" height="4" rx="1"/><path d="M8 13l3 3 5-6"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>',
   car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
   camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -256,7 +257,7 @@ function showJobs() {
   const draw = (jobs) => {
     const q = jobQuery.toLowerCase().trim();
     const list = jobs.filter((j) => (jobFilter === 'all' || j.active)
-      && (!q || [j.name, j.number, j.supervisor, j.address, j.township].join(' ').toLowerCase().includes(q)));
+      && (!q || [j.name, j.number, j.supervisor, j.address, j.township, j.utilities].join(' ').toLowerCase().includes(q)));
     $('#count').textContent = `${list.length} job${list.length === 1 ? '' : 's'}`;
     if (!list.length) { $('#jobList').innerHTML = '<div class="empty">No jobs match that search.</div>'; return; }
     let html = ''; let year = null; let open = false;
@@ -305,6 +306,23 @@ function infoCard(cls, icon, title, text, { place = true } = {}) {
     <div class="body">${esc(text)}</div>${links ? `<div class="links">${links}</div>` : ''}</section>`;
 }
 
+// Utility Emergency Contacts: one call button per number, named from its line
+// ("PECO Gas: 800-841-4141" -> "Call PECO Gas").
+function utilityCard(text) {
+  const title = 'Utility Emergency Contacts';
+  if (!text) return `<section class="card utility"><h3><span class="dot">${I.bolt}</span>${title}</h3><div class="body none">Not entered yet</div></section>`;
+  const buttons = [];
+  for (const line of text.split('\n')) {
+    for (const m of line.matchAll(PHONE_RE)) {
+      const num = `${m[2]}-${m[3]}-${m[4]}`;
+      const label = line.slice(0, m.index).replace(/[\s:–—-]+$/, '').trim() || line.replace(m[0], '').replace(/^[\s:–—-]+|[\s:–—-]+$/g, '').trim();
+      buttons.push(`<a class="btn call" href="tel:${num.replace(/-/g, '')}">${I.phone}<span>${label ? `Call ${esc(label)}` : 'Call'}<small>${num}</small></span></a>`);
+    }
+  }
+  return `<section class="card utility"><h3><span class="dot">${I.bolt}</span>${title}</h3>
+    <div class="body">${esc(text)}</div>${buttons.length ? `<div class="links ulinks">${buttons.join('')}</div>` : ''}</section>`;
+}
+
 async function showJob(id) {
   app.innerHTML = `${bar(`<button class="back" data-go="jobs">${I.back}Jobs</button>`)}<main><div class="wrap"><div class="loading">Loading…</div></div></main>`;
   let jobs;
@@ -326,6 +344,7 @@ async function showJob(id) {
       ${infoCard('hospital', 'plus', 'Nearest Hospital', j.hospital)}
       ${infoCard('police', 'badge', 'Nearest Police Dept', j.police)}
       ${infoCard('fire', 'flame', 'Nearest Fire Dept', j.fire)}
+      ${utilityCard(j.utilities)}
       ${infoCard('', 'town', 'Township', j.township)}
       ${j.toilet ? infoCard('', 'toilet', 'Portable Toilet', j.toilet, { place: false }) : ''}
       ${j.files.length ? `<section class="card"><h3><span class="dot">${I.file}</span>Job Files</h3><div class="files">${j.files.map((f) => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${I.file}${esc(f.name)}</a>`).join('')}</div></section>` : ''}

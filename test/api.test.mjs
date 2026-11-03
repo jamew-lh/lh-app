@@ -154,6 +154,7 @@ test('job order: newest year first, 000 X jobs at the end of their year, non-job
   assert.equal(sad.year, 2025);
   assert.match(sad.hospital, /Penn Medicine/);
   assert.equal(sad.files[0].name, 'Sadsbury codes.pdf');
+  assert.match(sad.utilities, /PECO Gas Emergency: 800-841-4141/);
   assert.equal(r.data.jobs.find((j) => j.name === 'Maple Springs').active, false);
 });
 
