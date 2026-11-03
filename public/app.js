@@ -160,8 +160,7 @@ function subBar(title) {
 function footer() {
   const s = (k, label) => `<a href="${LINKS[k]}" target="_blank" rel="noopener" aria-label="${label}">${I[k]}</a>`;
   return `<footer><div class="wrap">
-    <div class="fvalues"><div class="follow">Our Mission</div><q>${esc(MISSION)}</q>
-      <div class="pills">${VALUES.map((v, i) => `<button class="vpill" data-value="${i}">${esc(v.name)}</button>`).join('')}</div></div>
+    <div class="fvalues"><div class="follow">Our Mission</div><q>${esc(MISSION)}</q></div>
     <div class="follow">Follow Lyons &amp; Hohl</div>
     <div class="social">${s('facebook', 'Facebook')}${s('instagram', 'Instagram')}${s('tiktok', 'TikTok')}${s('linkedin', 'LinkedIn')}</div>
     <div class="fine">Pride In Our People. Pride In Our Work.</div>
