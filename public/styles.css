@@ -202,3 +202,8 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 .exp.muted { color: var(--muted); }
 .maplink { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 700; text-decoration: none; min-height: 36px; }
 .maplink svg { width: 16px; height: 16px; }
+
+.person.company { background: var(--tan-soft); border-color: #E8CFB4; }
+.person.company .avatar { background: var(--tan); color: var(--green-ink); }
+.person.company .avatar svg { width: 22px; height: 22px; }
+.person.company .round:not(.call) { background: #fff; }

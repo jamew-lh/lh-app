@@ -363,13 +363,20 @@ async function showPhones() {
       <div id="people" class="list"><div class="loading">Loading…</div></div>
     </div></main>${footer()}`;
   try {
-    if (!phonesCache || Date.now() - phonesCache.at > FRESH_MS) phonesCache = { at: Date.now(), people: (await api('phones')).people };
+    if (!phonesCache || Date.now() - phonesCache.at > FRESH_MS) { const d = await api('phones'); phonesCache = { at: Date.now(), people: d.people, company: d.company || [] }; }
   } catch (e) { if (e.message !== 'signed-out') $('#people').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
   let openName = null;
   const draw = () => {
     const q = phoneQuery.toLowerCase().trim();
     const list = phonesCache.people.filter((p) => !q || `${p.name} ${p.position}`.toLowerCase().includes(q));
-    $('#people').innerHTML = list.length ? list.map((p, i) => {
+    const company = phonesCache.company.filter((c) => !q || c.name.toLowerCase().includes(q));
+    const top = company.map((c) => {
+      const digits = c.cell.replace(/[^\d+]/g, '');
+      return `<div class="person company"><span class="avatar">${I.jobs}</span>
+        <span class="main"><div class="title">${esc(c.name)}</div><div class="sub">${esc(c.cell)}</div></span>
+        <span class="callbtns">${c.text === false ? '' : `<a class="round" href="sms:${digits}" aria-label="Text ${esc(c.name)}">${I.text}</a>`}<a class="round call" href="tel:${digits}" aria-label="Call ${esc(c.name)}">${I.phone}</a></span></div>`;
+    }).join('');
+    $('#people').innerHTML = top + (list.length ? list.map((p, i) => {
       const digits = (p.cell || '').replace(/[^\d+]/g, '');
       const btns = digits ? `<span class="callbtns"><a class="round" href="sms:${digits}" aria-label="Text ${esc(p.name)}">${I.text}</a><a class="round call" href="tel:${digits}" aria-label="Call ${esc(p.name)}">${I.phone}</a></span>` : '';
       const info = `<span class="avatar">${esc(initials(p.name))}</span>
@@ -379,7 +386,7 @@ async function showPhones() {
       return `<div class="person-wrap${open ? ' open' : ''}"><div class="person">
           <button class="person-tap" data-i="${i}" aria-expanded="${open}">${info}${I.chev}</button>${btns}</div>
           ${open ? detailsHtml(p.details) : ''}</div>`;
-    }).join('') : '<div class="empty">Nobody matches that search.</div>';
+    }).join('') : (top ? '' : '<div class="empty">Nobody matches that search.</div>'));
     $('#people').querySelectorAll('.person-tap').forEach((b) => b.addEventListener('click', () => {
       const name = list[Number(b.dataset.i)].name;
       openName = openName === name ? null : name;

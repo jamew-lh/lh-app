@@ -145,6 +145,9 @@ test('phone list: current Site Contractors with a cell, sorted, no PINs', async 
   const r = await call('GET', '/api/phones', { cookie });
   assert.deepEqual(r.data.people.map((p) => p.name), ['Adams, Nopin', 'Baker, Sam', 'Boss, Morgan', 'Chen, Lee', 'Enck, Tyler L.', 'Rivera, Tony', 'Smoker, Chad M.', 'Smoker, Gage', 'Walker, James']);
   assert.ok(r.data.people.every((p) => Object.keys(p).sort().join() === 'cell,name,position'));
+  assert.deepEqual(r.data.company, [{ name: 'Site Office', cell: '610-942-2400', text: false }, { name: 'L&H HR Cell', cell: '484-986-8153', text: true }]);
+  // hidden from the list, but can still sign in
+  assert.equal((await login('Korth', '4444')).status, 200);
 });
 
 test('Airtable token problems give a clear message', async () => {

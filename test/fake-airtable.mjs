@@ -20,6 +20,7 @@ export const EMPLOYEE_RECORDS = [
   emp('recEMP0000000009', 'Smoker, Gage', '1111', 'Laborer', '(610) 555-0109'),
   emp('recEMP0000000010', 'Smoker, Chad M.', '2222', 'Shop', '(610) 555-0110'),
   emp('recEMP0000000011', 'Boss, Morgan', '3333', 'Management', '(610) 555-0111'),
+  emp('recX7mle94324fL0y', 'Korth, Brittany', '4444', 'Office', '(610) 555-0112'),
   emp('recbAiVcHKoqqVXYZ', 'Enck, Tyler L.', '8642', 'Shop', '(610) 555-0108', 'Current Employee', 'Paving'),
 ];
 
