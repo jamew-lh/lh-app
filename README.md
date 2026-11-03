@@ -13,6 +13,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **Vacation Calendar** button: only for position Management (see step 3)
 - **Employee details in the phone list** (start date, driving list, medical card + expiration, license endorsements, home address): only Management and Superviser / SUP. Tap a name to open them. Other people's phones never receive this information.
 - **Phone list:** Site Office and HR Cell are pinned at the top (`phoneListCompany` in `lib/config.mjs`); people listed in `phoneListHide` are left off the list but can still sign in
+- **In Case of Vehicle Accident** (red button on the home screen): step-by-step page. Names, numbers and the photo list are in `ACCIDENT` in `public/app.js`
 - People with the same last name (the Smokers) each sign in with their own PIN
 
 ---

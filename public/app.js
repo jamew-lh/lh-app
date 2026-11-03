@@ -40,6 +40,9 @@ const I = {
   gps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg>',
   dozer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="13" height="5" rx="2.5"/><path d="M5 14V9h5l2 5M10 9V6h3"/><path d="M16 12l5 1v6h-3"/></svg>',
   wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0 5 5l-9.4 9.4a2.1 2.1 0 0 1-3-3l9.4-9.4a4 4 0 0 0-2-2z"/><path d="M14.7 6.3l2.5-2.5a4 4 0 0 1 3 3l-2.5 2.5"/></svg>',
+  car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>',
   nav: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -172,6 +175,7 @@ function showHome() {
       <p>Everything you need for the jobsite, in one place.</p>
     </div></section>
     <main><div class="wrap">
+      <button class="alert-tile" data-go="accident"><span class="ic">${I.car}</span><span class="txt"><b>In Case of Vehicle Accident</b><small>What to do, step by step</small></span>${I.chev}</button>
       <div class="section-title">Everyday</div>
       <div class="tiles">
         ${tile({ go: 'jobs', icon: 'jobs', title: 'Job Details', sub: 'Location, supervisor, hospital, police, fire' })}
@@ -309,6 +313,58 @@ async function showJob(id) {
   window.scrollTo(0, 0);
 }
 
+// ---- Vehicle accident ----
+const ACCIDENT = {
+  contacts: [
+    { group: 'Lyons & Hohl (LH)', people: [['Bob', '610-636-7289'], ['James', '610-858-4549']] },
+    { group: 'Lyons & Hohl Paving (LHP)', people: [['Tim', '610-636-7126'], ['Erick', '610-636-7131']] },
+    { group: 'LH & LHP', people: [['Patti', '484-986-8153']] },
+  ],
+  pinkFormText: '484-986-8153',
+  photos: [
+    ['Other driver’s ID', ''],
+    ['Their insurance card', ''],
+    ['Their license plate', ''],
+    ['Their VIN', 'On the dashboard by the windshield, or the driver’s door frame'],
+    ['Both vehicles', 'Show the damage and where the vehicles ended up'],
+    ['The intersection or road', 'Street signs and surroundings that show where it happened'],
+  ],
+};
+let photoChecks = new Set();
+
+function showAccident() {
+  document.title = 'Vehicle Accident · Lyons & Hohl';
+  const tel = (n) => n.replace(/\D/g, '');
+  const callBtn = (name, num) => `<a class="btn call" href="tel:${tel(num)}">${I.phone}<span>Call ${esc(name)}<small>${esc(num)}</small></span></a>`;
+  const step = (n, title, body) => `<li class="step"><span class="stepnum">${n}</span><div class="stepbody"><h3>${title}</h3>${body}</div></li>`;
+  app.innerHTML = `${subBar('Accident')}
+    <section class="acc-head"><div class="wrap">
+      <div class="eyebrow">In case of vehicle accident</div>
+      <h2>Stay calm. Work through these steps.</h2>
+      <a class="btn btn-911" href="tel:911">${I.phone}Anyone hurt? Call 911</a>
+    </div></section>
+    <main><div class="wrap"><ol class="steps">
+      ${step(1, 'Check yourself', '<p>Are you okay? Check your passengers too.</p>')}
+      ${step(2, 'Check the other driver', '<p>Are they okay? Check their passengers too.</p>')}
+      ${step(3, 'Call for help', `<div class="split">
+          <div class="opt bad"><b>Any injuries</b><p>Call 911 immediately.</p><a class="btn btn-red" href="tel:911">${I.phone}Call 911</a></div>
+          <div class="opt"><b>No visible injuries</b><p>Call the local police to the scene and <strong>get an incident / case number</strong>.</p></div>
+        </div>`)}
+      ${step(4, 'Take pictures', `<p>Tap each one as you get it.</p><div class="checks">${ACCIDENT.photos.map(([t, d], i) => `
+          <button class="checkrow" data-photo="${i}" aria-pressed="${photoChecks.has(i)}"><span class="box">${I.check}</span><span><b>${esc(t)}</b>${d ? `<small>${esc(d)}</small>` : ''}</span></button>`).join('')}</div>`)}
+      ${step(5, 'Call one of these people', ACCIDENT.contacts.map((g) => `<div class="cgroup"><div class="cgname">${esc(g.group)}</div><div class="cbtns">${g.people.map(([n, num]) => callBtn(n, num)).join('')}</div></div>`).join(''))}
+      ${step(6, 'Fill out the Pink Form', `<p>Write up the incident on the <strong>Pink Form</strong> as soon as you can.</p>
+          <ul class="ticks"><li><strong>Text a picture</strong> of it to ${esc(ACCIDENT.pinkFormText)}</li><li>Turn the <strong>original</strong> in to the main office</li></ul>
+          <a class="btn btn-green" href="sms:${tel(ACCIDENT.pinkFormText)}">${I.camera}Text a photo of the Pink Form</a>`)}
+    </ol></div></main>${footer()}`;
+  app.querySelectorAll('.checkrow').forEach((b) => b.addEventListener('click', () => {
+    const i = Number(b.dataset.photo);
+    if (photoChecks.has(i)) photoChecks.delete(i); else photoChecks.add(i);
+    b.setAttribute('aria-pressed', String(photoChecks.has(i)));
+  }));
+  window.scrollTo(0, 0);
+}
+
 // ---- Phones ----
 const fmtDate = (iso) => {
   if (!iso) return '';
@@ -404,6 +460,7 @@ function route() {
   if (h === 'jobs') return showJobs();
   if (h.startsWith('job/')) return showJob(h.slice(4));
   if (h === 'phones') return showPhones();
+  if (h === 'accident') return showAccident();
   showHome();
   window.scrollTo(0, 0);
 }
