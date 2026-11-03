@@ -385,3 +385,6 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 .linkbtn { background: none; border: 0; color: var(--green); font-weight: 600; font-size: 15px; padding: 10px 4px; min-height: 44px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .tblock .dlabel { width: auto; }
 .bar h1 { font-size: 20px; text-align: right; line-height: 1.05; }
+
+.fromjob { display: block; color: var(--muted); font-size: 14px; margin: 6px 2px 0; }
+.flabel small b { color: var(--ink); }

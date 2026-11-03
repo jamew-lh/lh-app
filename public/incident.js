@@ -234,15 +234,15 @@ function stepHtml(i) {
       <p class="dayline" id="dayLine">${C.esc(dayOf(f.date))}</p>
       <div class="grid2">${field('Time began work', input('began', 'time'))}<div>${field('Shift', chips('shift', ['Regular Shift', 'Overtime'], f.shift))}</div></div>
       ${field('Job', `<input type="text" name="jobPick" list="jobList" value="${C.esc(f.jobPick || [f.jobNumber, f.job].filter(Boolean).join(' – '))}" placeholder="Start typing a job name or number" autocomplete="off"><datalist id="jobList"></datalist>`)}
-      ${field('Injured employee <b class="req">*</b>', `<input type="text" name="injured" list="peopleList" value="${C.esc(f.injured)}" placeholder="Start typing a name" autocomplete="off"><datalist id="peopleList"></datalist>`, 'For property damage or a near miss with nobody hurt, type “None”.')}
+      ${field('Injured employee <b class="req">*</b>', `<input type="text" name="injured" list="peopleList" value="${C.esc(f.injured)}" placeholder="Last name, First name" autocomplete="off"><datalist id="peopleList"></datalist>`, '<b>Type last name first</b> (e.g. Smith, John) and pick from the list. For property damage or a near miss with nobody hurt, type “None”.')}
       ${field('Job title', input('jobTitle'))}`;
     case 1: return `
       ${field('Injury class <b class="req">*</b>', chips('injuryClass', CLASSES, f.injuryClass, true), 'Pick all that apply.')}
       ${field('Location of incident', chips('location', ["Employer's Premises", 'Other'], f.location))}
-      <div ${f.location === 'Other' ? '' : 'hidden'} id="locOther">${input('locationOther', 'text', 'placeholder="Where?"')}</div>
+      <div ${f.location === 'Other' ? '' : 'hidden'} id="locOther">${input('locationOther', 'text', 'placeholder="Where?"')}<small class="fromjob" id="locFromJob" hidden>Filled in from the job’s address in Job Details — change it if the incident was somewhere else.</small></div>
       ${field('Employee was working', chips('working', ['Alone', 'With Co-Worker', 'Other'], f.working))}
       <div ${f.working === 'Other' ? '' : 'hidden'} id="workOther">${input('workingOther', 'text', 'placeholder="Explain"')}</div>
-      ${field('Witnesses', `${area('witnesses', 'Names, one per line', 3)}<div class="addrow"><input type="text" id="witnessPick" list="peopleList" placeholder="Add an employee…" autocomplete="off"><button type="button" class="btn btn-light" id="witnessAdd">${I.plus}Add</button></div>`)}`;
+      ${field('Witnesses', `${area('witnesses', 'Names, one per line', 3)}<div class="addrow"><input type="text" id="witnessPick" list="peopleList" placeholder="Add an employee (last name first)…" autocomplete="off"><button type="button" class="btn btn-light" id="witnessAdd">${I.plus}Add</button></div>`)}`;
     case 2: return `
       ${field('Task / activity when incident occurred', area('task', 'What were they doing?', 3))}
       ${field('Nature of injury / illness', area('nature', 'Body part affected, how affected, severity', 3))}
@@ -318,7 +318,10 @@ function wireStep() {
     } else {
       D.form[name] = D.form[name] === v ? '' : v;
       set.querySelectorAll('.pick').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.v === D.form[name])));
-      if (name === 'location') $('#locOther').hidden = D.form.location !== 'Other';
+      if (name === 'location') {
+        $('#locOther').hidden = D.form.location !== 'Other';
+        if (D.form.location === 'Other' && !D.form.locationOther.trim()) fillFromJob();
+      }
       if (name === 'working') $('#workOther').hidden = D.form.working !== 'Other';
     }
     save();
@@ -354,6 +357,19 @@ function wireStep() {
   });
   document.querySelectorAll('.dot').forEach((d) => d.addEventListener('click', () => go(Number(d.dataset.step))));
   $('#incExit').onclick = () => { location.hash = 'incidents'; };
+}
+
+// "Other" location: start with the job's Nearest Physical Address from Job Details.
+async function fillFromJob() {
+  if (!D.form.job) return;
+  let jobs = [];
+  try { jobs = await C.loadJobs(); } catch { return; }
+  const j = jobs.find((x) => x.number === D.form.jobNumber && x.name === D.form.job)
+    || jobs.find((x) => x.name.toLowerCase() === D.form.job.toLowerCase());
+  if (!j || !j.address || D.form.location !== 'Other' || D.form.locationOther.trim()) return;
+  D.form.locationOther = j.address; save();
+  const el = document.querySelector('[name=locationOther]'); if (el) el.value = j.address;
+  const note = $('#locFromJob'); if (note) note.hidden = false;
 }
 
 function checkStep(s) {
