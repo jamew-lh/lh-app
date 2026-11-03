@@ -102,6 +102,14 @@ test('refresh re-reads Airtable, only when signed in, at most every 15 seconds',
   assert.equal((await call('GET', '/api/me?fresh=1', { fetchImpl: f })).status, 401);
 });
 
+test('Supervisors section: Superviser, SUP, Foreman, Management only', async () => {
+  assert.equal((await login('Chen', '2468')).data.person.supervisor, true);   // Superviser
+  assert.equal((await login('Baker', '5555')).data.person.supervisor, true);  // Foreman
+  assert.equal((await login('Boss', '3333')).data.person.supervisor, true);   // Management
+  assert.equal((await login('Rivera', '4321')).data.person.supervisor, false); // Operator
+  assert.equal((await login('Walker', '1234')).data.person.supervisor, false); // Office
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);

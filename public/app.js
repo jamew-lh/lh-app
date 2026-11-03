@@ -11,6 +11,14 @@ const LINKS = {
   jobsiteBases: 'https://www.lyonshohl.com/s/__Jobsite-bases_10-08-26.pdf',
   equipment: 'https://lh-equipment.netlify.app/',
   pmService: 'https://lh-service.netlify.app/',
+  // Supervisors section (Site Supervisors, Foremen, Management). Add or remove forms here.
+  esReports: [
+    ['Sadsbury E&S Report', 'https://form.jotform.com/252333380553150/prefill/68a867a137353566f02d11400676'],
+    ['Odessa E&S Report', 'https://form.jotform.com/252333624892157/prefill/68a869eb336436cca549de1e6e4c'],
+    ['Gray Farm E&S Report', 'https://form.jotform.com/251245005916047/prefill/681908d3636638e9e4369afa168f'],
+    ['Brandywine Walk E&S Report', 'https://form.jotform.com/253094005738154/prefill/690cc872393162a5eba67f1fc74f'],
+    ['1201 E&S Report', 'https://form.jotform.com/261863199779176/prefill/6a4b95a8373131b3feedd98e6e37'],
+  ],
   facebook: 'https://www.facebook.com/lyonshohlsite/',
   instagram: 'https://www.instagram.com/lyons_hohl',
   tiktok: 'https://www.tiktok.com/@lyons_hohl',
@@ -198,6 +206,11 @@ function showHome() {
         <button class="alert-tile" data-go="accident"><span class="ic">${I.car}</span><span class="txt"><b>In Case of Vehicle Accident</b><small>What to do, step by step</small></span>${I.chev}</button>
         ${me.incidents?.view ? `<button class="tile safety-tile" data-go="incidents"><span class="ic">${I.report}</span><span class="txt"><b>Incident Report</b><small>${me.incidents.file ? 'Fill out a loss incident investigation report' : 'Review and sign incident reports'}</small></span>${I.chev}</button>` : ''}
       </div>
+      ${me.supervisor ? `<div class="section-title">Supervisors</div>
+      <div class="linklist">
+        <div class="linklist-head"><span class="ic">${I.codes}</span><span><b>E&amp;S Reports</b><small>Erosion &amp; sediment inspection forms</small></span></div>
+        ${LINKS.esReports.map(([name, url]) => `<a class="linkrow" href="${url}" target="_blank" rel="noopener"><span>${esc(name)}</span>${I.ext}</a>`).join('')}
+      </div>` : ''}
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">
         ${tile({ href: me.calendarUrl, icon: 'sun', title: 'Vacation Calendar', sub: 'Who is off, month by month', cls: 'office wide', external: true })}

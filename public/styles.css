@@ -388,3 +388,15 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 
 .fromjob { display: block; color: var(--muted); font-size: 14px; margin: 6px 2px 0; }
 .flabel small b { color: var(--ink); }
+
+/* Supervisors section: list of form links */
+.linklist { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.linklist-head { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--line); background: #FAFBFB; }
+.linklist-head .ic { width: 46px; height: 46px; border-radius: 12px; background: var(--green); color: #fff; display: grid; place-items: center; flex: none; }
+.linklist-head .ic svg { width: 26px; height: 26px; }
+.linklist-head b { display: block; font-family: 'Barlow Condensed', sans-serif; font-size: 21px; color: var(--green); line-height: 1.1; }
+.linklist-head small { color: var(--muted); font-size: 14px; }
+.linkrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; min-height: 54px; border-top: 1px solid var(--line); text-decoration: none; color: var(--ink); font-weight: 600; font-size: 17px; }
+.linkrow:first-of-type { border-top: 0; }
+.linkrow:active { background: var(--ground); }
+.linkrow .ext { position: static; width: 18px; height: 18px; color: #A3AFAC; flex: none; }
