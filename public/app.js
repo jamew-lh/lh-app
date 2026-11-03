@@ -315,7 +315,7 @@ function utilityCard(text) {
   for (const line of text.split('\n')) {
     for (const m of line.matchAll(PHONE_RE)) {
       const num = `${m[2]}-${m[3]}-${m[4]}`;
-      const label = line.slice(0, m.index).replace(/[\s:–—-]+$/, '').trim() || line.replace(m[0], '').replace(/^[\s:–—-]+|[\s:–—-]+$/g, '').trim();
+      const label = line.slice(0, m.index).replace(/[\s:|–—-]+$/, '').trim() || line.replace(m[0], '').replace(/^[\s:|–—-]+|[\s:|–—-]+$/g, '').trim();
       buttons.push(`<a class="btn call" href="tel:${num.replace(/-/g, '')}">${I.phone}<span>${label ? `Call ${esc(label)}` : 'Call'}<small>${num}</small></span></a>`);
     }
   }

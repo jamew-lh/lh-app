@@ -44,7 +44,7 @@ export const JOB_RECORDS = [
     [J.f.fire]: 'Sadsbury Fire Co\n24 1st Ave\nCoatesville, PA 19320\n610-857-9332\n',
     [J.f.township]: 'Sadsbury Township\n2920 Lincoln HWY\nSadsburyville, PA 19369\n610-857-9503\n',
     [J.f.toilet]: 'Port A Bowl',
-    [J.f.utilities]: 'PECO Gas Emergency: 800-841-4141\nPECO Electric: 800-841-4141\nAqua Water - 877-987-2782',
+    [J.f.utilities]: 'PECO Gas Emergency: 800-841-4141\nPECO Electric: 800-841-4141\nAqua Water - 877-987-2782\nCOMCAST | 1-800-934-6489',
     [J.f.codes]: [{ id: 'att1', url: 'https://example.com/codes.pdf', filename: 'Sadsbury codes.pdf' }],
   }),
   job('recJOB0000000007', '416 Ridge Pike Car Wash', '425225', { [J.f.supervisor]: { name: 'Other' } }),
