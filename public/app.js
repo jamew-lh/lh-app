@@ -176,7 +176,6 @@ function showHome() {
       <p>Everything you need for the jobsite, in one place.</p>
     </div></section>
     <main><div class="wrap">
-      <button class="alert-tile" data-go="accident"><span class="ic">${I.car}</span><span class="txt"><b>In Case of Vehicle Accident</b><small>What to do, step by step</small></span>${I.chev}</button>
       <div class="section-title">Everyday</div>
       <div class="tiles">
         ${tile({ go: 'jobs', icon: 'jobs', title: 'Job Details', sub: 'Location, supervisor, hospital, police, fire' })}
@@ -189,6 +188,10 @@ function showHome() {
         ${tile({ href: LINKS.costCodes, icon: 'codes', title: 'Cost Codes', sub: 'Standard site cost codes', cls: 'ref', external: true })}
         ${tile({ href: LINKS.shoring, icon: 'shield', title: 'Shoring Tab Data', sub: 'All shields', cls: 'ref', external: true })}
         ${tile({ href: LINKS.jobsiteBases, icon: 'gps', title: 'Jobsite Bases', sub: 'GPS base coordinates', cls: 'ref', external: true })}
+      </div>
+      <div class="section-title">Safety</div>
+      <div class="safety">
+        <button class="alert-tile" data-go="accident"><span class="ic">${I.car}</span><span class="txt"><b>In Case of Vehicle Accident</b><small>What to do, step by step</small></span>${I.chev}</button>
       </div>
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">

@@ -209,7 +209,8 @@ input:focus { outline: 3px solid rgba(212,160,112,.55); outline-offset: 0; borde
 .person.company .round:not(.call) { background: #fff; }
 
 /* ---------- Vehicle accident ---------- */
-.alert-tile { display: flex; align-items: center; gap: 14px; width: 100%; margin-top: 18px; padding: 14px; border: 0; border-radius: var(--radius); background: var(--bad); color: #fff; text-align: left; cursor: pointer; box-shadow: 0 6px 18px rgba(180,35,24,.25); }
+.safety { display: flex; flex-direction: column; gap: 10px; }
+.alert-tile { display: flex; align-items: center; gap: 14px; width: 100%; padding: 14px; border: 0; border-radius: var(--radius); background: var(--bad); color: #fff; text-align: left; cursor: pointer; box-shadow: 0 6px 18px rgba(180,35,24,.25); }
 .alert-tile:active { transform: scale(.99); }
 .alert-tile .ic { width: 46px; height: 46px; border-radius: 12px; background: rgba(255,255,255,.16); display: grid; place-items: center; flex: none; }
 .alert-tile .ic svg { width: 28px; height: 28px; }
