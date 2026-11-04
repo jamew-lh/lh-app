@@ -227,7 +227,6 @@ function showHome() {
       <div class="tiles">
         ${tile({ go: 'jobs', icon: 'jobs', title: 'Job Details', sub: 'Location, supervisor, hospital, police, fire' })}
         ${tile({ go: 'phones', icon: 'phone', title: 'Phone List', sub: 'Call or text anyone' })}
-        ${tile({ go: 'vendors', icon: 'truck', title: 'Vendors', sub: 'Suppliers: call or get directions' })}
         ${tile({ href: LINKS.timecard, icon: 'clock', title: 'Timecard', sub: 'Daily hours', external: true })}
         ${tile({ href: LINKS.vacation, icon: 'sun', title: 'Vacation Request', sub: 'Ask for time off', external: true })}
       </div>
@@ -236,6 +235,7 @@ function showHome() {
         ${tile({ href: LINKS.costCodes, icon: 'codes', title: 'Cost Codes', sub: 'Standard site cost codes', cls: 'ref', external: true })}
         ${tile({ href: LINKS.shoring, icon: 'shield', title: 'Shoring Tab Data', sub: 'All shields', cls: 'ref', external: true })}
         ${tile({ href: LINKS.jobsiteBases, icon: 'gps', title: 'Jobsite Bases', sub: 'GPS base coordinates', cls: 'ref', external: true })}
+        ${tile({ go: 'vendors', icon: 'truck', title: 'Vendors', sub: 'Suppliers: call or get directions', cls: 'ref' })}
       </div>
       <div class="section-title">Safety</div>
       <div class="safety">
