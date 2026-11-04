@@ -17,6 +17,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **911** buttons never dial straight away: they open a "Call 911?" confirmation first
 - **Supervisors** section (Superviser / SUP, Foreman, Management): E&S report forms (JotForm). Edit the list in `esReports` at the top of `public/app.js`
 - **Our Values** (home screen; tap one for details) and the **mission** in the footer: edit `VALUES` and `MISSION` at the top of `public/app.js`
+- **Vendors** (Everyday): every row in the **Vendors** base, grouped by Type, with call and directions buttons
 - People with the same last name (the Smokers) each sign in with their own PIN
 
 ---
@@ -26,7 +27,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 1. Go to <https://airtable.com/create/tokens> and click **Create new token**.
 2. Name it `L&H App`.
 3. **Scopes:** add `data.records:read` and `data.records:write`.
-4. **Access:** add these three bases: **Emloyees**, **Job Name List** and **Safety**.
+4. **Access:** add these four bases: **Emloyees**, **Job Name List**, **Safety** and **Vendors**.
    The app only ever writes to the **Safety** base (incident reports); it only reads the other two.
 5. Click **Create token** and copy it. You'll paste it into Netlify in step 3.
    Don't email it or paste it anywhere else.

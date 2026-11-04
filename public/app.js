@@ -84,6 +84,7 @@ const I = {
   vPride: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.5 6 .8-4.4 4.1 1.1 6L12 16.6 6.7 19.4l1.1-6L3.4 9.3l6-.8z"/></svg>',
   vOwn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0"/><path d="M6.5 11h11v4a5.5 5.5 0 0 1-11 0z"/><path d="M12 14v2"/></svg>',
   vHonest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11l3-3a2 2 0 0 1 2.8 0L15 10l3-1 3 3-6.5 6.5a2 2 0 0 1-2.8 0L3 9l3-3z"/></svg>',
+  truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>',
   car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
   camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -226,6 +227,7 @@ function showHome() {
       <div class="tiles">
         ${tile({ go: 'jobs', icon: 'jobs', title: 'Job Details', sub: 'Location, supervisor, hospital, police, fire' })}
         ${tile({ go: 'phones', icon: 'phone', title: 'Phone List', sub: 'Call or text anyone' })}
+        ${tile({ go: 'vendors', icon: 'truck', title: 'Vendors', sub: 'Suppliers: call or get directions' })}
         ${tile({ href: LINKS.timecard, icon: 'clock', title: 'Timecard', sub: 'Daily hours', external: true })}
         ${tile({ href: LINKS.vacation, icon: 'sun', title: 'Vacation Request', sub: 'Ask for time off', external: true })}
       </div>
@@ -258,7 +260,7 @@ function showHome() {
     ${footer()}`;
   $('#signout').addEventListener('click', async () => {
     try { await api('logout', { method: 'POST' }); } catch { /* ignore */ }
-    me = null; jobsCache = phonesCache = null; location.hash = ''; showLogin();
+    me = null; jobsCache = phonesCache = vendorsCache = null; location.hash = ''; showLogin();
   });
 }
 
@@ -442,6 +444,46 @@ function showAccident() {
   window.scrollTo(0, 0);
 }
 
+// ---- Vendors ----
+let vendorsCache = null;
+let vendorQuery = '';
+let vendorType = '';
+async function showVendors() {
+  document.title = 'Vendors · Lyons & Hohl';
+  app.innerHTML = `${subBar('Vendors')}
+    <main><div class="wrap">
+      <div class="tools"><div class="search">${I.search}<input type="search" id="q" placeholder="Search name, town or what they sell" value="${esc(vendorQuery)}" autocomplete="off"></div>
+        <div class="chips typechips" id="typeChips"></div></div>
+      <div id="vendorList"><div class="loading">Loading…</div></div>
+    </div></main>${footer()}`;
+  try {
+    if (!vendorsCache || Date.now() - vendorsCache.at > FRESH_MS) vendorsCache = { at: Date.now(), list: (await api('vendors')).vendors };
+  } catch (e) { if (e.message !== 'signed-out') $('#vendorList').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const types = [...new Set(vendorsCache.list.map((v) => v.type))];
+  const drawChips = () => {
+    $('#typeChips').innerHTML = [['', 'All'], ...types.map((t) => [t, t])].map(([t, label]) => `<button class="chip" data-type="${esc(t)}" aria-pressed="${vendorType === t}">${esc(label)}</button>`).join('');
+  };
+  const draw = () => {
+    const q = vendorQuery.toLowerCase().trim();
+    const list = vendorsCache.list.filter((v) => (!vendorType || v.type === vendorType) && (!q || `${v.name} ${v.address} ${v.type}`.toLowerCase().includes(q)));
+    if (!list.length) { $('#vendorList').innerHTML = '<div class="empty">No vendors match that search.</div>'; return; }
+    let html = ''; let type = null;
+    for (const v of list) {
+      if (v.type !== type) { if (type !== null) html += '</div>'; type = v.type; html += `<div class="year">${esc(type)}</div><div class="list">`; }
+      const tel = v.phone.replace(/[^\d+]/g, '');
+      html += `<div class="vendor"><div class="main"><div class="title">${esc(v.name)}</div>${v.address ? `<div class="sub">${esc(v.address)}</div>` : ''}${v.phone ? `<div class="sub">${esc(v.phone)}</div>` : ''}</div>
+        <span class="callbtns">${v.address ? `<a class="round" href="${mapsDir(v.address)}" target="_blank" rel="noopener" aria-label="Directions to ${esc(v.name)}">${I.nav}</a>` : ''}${tel ? `<a class="round call" href="tel:${tel}" aria-label="Call ${esc(v.name)}">${I.phone}</a>` : ''}</span></div>`;
+    }
+    $('#vendorList').innerHTML = `${html}</div>`;
+  };
+  drawChips(); draw();
+  $('#q').addEventListener('input', (e) => { vendorQuery = e.target.value; draw(); });
+  $('#typeChips').addEventListener('click', (e) => {
+    const c = e.target.closest('[data-type]'); if (!c) return;
+    vendorType = c.dataset.type; drawChips(); draw();
+  });
+}
+
 // ---- Phones ----
 const fmtDate = (iso) => {
   if (!iso) return '';
@@ -539,6 +581,7 @@ function route() {
   if (h === 'jobs') return showJobs();
   if (h.startsWith('job/')) return showJob(h.slice(4));
   if (h === 'phones') return showPhones();
+  if (h === 'vendors') return showVendors();
   if (h === 'accident') return showAccident();
   if (h === 'incidents') return showIncidents();
   if (h.startsWith('incident-new')) return showIncidentForm(h.split('/')[1] || '');

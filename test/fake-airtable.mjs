@@ -1,6 +1,6 @@
 // A stand-in for the Airtable API, for tests and the local preview.
 // Names and phone numbers here are made up.
-import { EMPLOYEES as E, JOBS as J, SAFETY as S } from '../lib/config.mjs';
+import { EMPLOYEES as E, JOBS as J, SAFETY as S, VENDORS as V } from '../lib/config.mjs';
 
 const emp = (id, name, pin, position, cell, status = 'Current Employee', location = 'SIte Contractors', more = {}) => ({
   id, fields: { [E.f.name]: name, [E.f.pin]: pin, [E.f.position]: { name: position }, [E.f.status]: { name: status }, [E.f.location]: { name: location }, [E.f.cell]: cell, ...more },
@@ -60,6 +60,14 @@ export const JOB_RECORDS = [
   job('recJOB0000000014', 'Odd number', '12345'),
 ];
 
+const ven = (id, name, address, phone, type) => ({ id, fields: { [V.f.name]: name, [V.f.address]: address, [V.f.phone]: phone, [V.f.type]: type } });
+export const VENDOR_RECORDS = [
+  ven('recVEN0000000001', 'Exeter Supply - Downingtown', '1059 W Boot Rd, Downingtown, PA 19335', '(484) 593-8443', 'Pipe, Fittings'),
+  ven('recVEN0000000002', 'Core & Main - Plymouth MTG', '400 S Gravers Rd, Plymouth Meeting, PA 19462', '(610) 275-7400', 'Pipe, Fittings'),
+  ven('recVEN0000000003', 'Mainline Concrete - Downingtown', '1001 W Boot Rd, Downingtown, PA 19335', '(610) 869-5556', 'Concrete'),
+  ven('recVEN0000000004', 'Knox Rental - West Chester', '421 E Market St, West Chester, PA 19382', '(610) 696-2996', 'Rental Store'),
+];
+
 // Safety base: an in-memory table so reports can be created, read, updated and given files.
 const TINY_JPG = 'https://fake.airtableusercontent.com/photo.jpg';
 export function fakeFetch({ fail = false } = {}) {
@@ -104,7 +112,8 @@ export function fakeFetch({ fail = false } = {}) {
       // selects come back as names in this fake; the app handles both
       return json({ records: [...safety.values()] });
     }
-    const records = base === E.base && table === E.table ? EMPLOYEE_RECORDS
+    const records = base === V.base && table === V.table ? VENDOR_RECORDS
+      : base === E.base && table === E.table ? EMPLOYEE_RECORDS
       : base === J.base && table === J.table ? JOB_RECORDS : null;
     if (!records) return new Response('{}', { status: 404 });
     // two pages to exercise paging

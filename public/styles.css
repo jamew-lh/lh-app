@@ -446,3 +446,12 @@ details.linklist[open] { border-color: var(--green); }
 .vs-dots i { width: 22px; height: 4px; border-radius: 2px; background: var(--line); }
 .vs-dots i.on { background: var(--tan); }
 .vs-close { width: 100%; margin-top: 12px; }
+
+/* vendors */
+.typechips { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.typechips::-webkit-scrollbar { display: none; }
+.typechips .chip { flex: none; }
+.vendor { display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 10px 12px 14px; }
+.vendor .main { flex: 1; min-width: 0; }
+.vendor .title { font-weight: 700; font-size: 17px; }
+.vendor .sub { color: var(--muted); font-size: 14px; margin-top: 1px; }

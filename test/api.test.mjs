@@ -110,6 +110,14 @@ test('Supervisors section: Superviser, SUP, Foreman, Management only', async () 
   assert.equal((await login('Walker', '1234')).data.person.supervisor, false); // Office
 });
 
+test('vendors: signed-in only, sorted by type then name', async () => {
+  assert.equal((await call('GET', '/api/vendors')).status, 401);
+  const { cookie } = await login('Rivera', '4321');
+  const r = await call('GET', '/api/vendors', { cookie });
+  assert.deepEqual(r.data.vendors.map((v) => v.name), ['Mainline Concrete - Downingtown', 'Core & Main - Plymouth MTG', 'Exeter Supply - Downingtown', 'Knox Rental - West Chester']);
+  assert.equal(r.data.vendors[0].phone, '(610) 869-5556');
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);
