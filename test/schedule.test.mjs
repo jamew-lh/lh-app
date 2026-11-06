@@ -62,6 +62,8 @@ test('setup: people with schedule names and no phone numbers, equipment placed a
   assert.equal(eq['730-06'].job, 'recJOB0000000011');        // "Southern berks" → Southern Berks
   assert.equal(eq['938-09'].job, '');                        // HB Shop → Yard
   assert.equal(eq['323-01'].down, true);
+  assert.equal(eq['938-09'].tracked, true);
+  assert.equal(eq['Old Plate'].tracked, false);
   assert.ok(!eq['Old Dozer'], 'sold equipment left out');
   assert.deepEqual(r.data.haulers.map((h) => h.name), ['Leary', 'Quarry - Martin Stone', 'Risbon']);
   assert.equal(r.data.linkPeople, 3);

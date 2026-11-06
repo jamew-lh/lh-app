@@ -463,7 +463,8 @@ function sidebar() {
   const repairBody = `<div class="sd-zone eq" data-zone="equip:REPAIR">${[...(b.equip.REPAIR || []), ...downIds].map((e) => eqChip(e, 'REPAIR')).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>`;
 
   const placedEq = new Set(Object.values(b.equip).flat());
-  const inYard = S.setup.equipment.filter((e) => !placedEq.has(e.id) && !e.down);
+  // Only machines with TRACKING checked in the equipment table (the ones the equipment app follows).
+  const inYard = S.setup.equipment.filter((e) => e.tracked && !placedEq.has(e.id) && !e.down);
   const types = [...new Set(inYard.map((e) => e.type).filter(Boolean))].sort();
   const shown = inYard.filter((e) => (!yard.type || e.type === yard.type) && (!yard.q || e.label.toLowerCase().includes(yard.q.toLowerCase())));
   const yardBody = `<div class="sd-yardtools"><input id="sdYardQ" placeholder="Filter yard…" value="${esc(yard.q)}">

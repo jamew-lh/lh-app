@@ -126,6 +126,7 @@ it also works on a tablet.
 - **Jobs:** active jobs from the Job Name List. **Equipment:** from LH Equipment → Equipment Info.
   Its Location decides which job a machine starts at; names that don't match a job are in
   `SCHEDULE.locationToJob` (e.g. "TOA 3" → TOA III). Down for Maintenance = Repair.
+  The **Yard** lists only machines with **TRACKING** checked in Equipment Info.
 - **Each day starts as a copy of the last saved day.** People with approved time off that day
   (timecard app → Scheduled Time Off) are taken off their job; part days and requests show as
   warnings. Equipment moves entered in the equipment app for that day are applied.

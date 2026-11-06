@@ -96,7 +96,7 @@ export const VENDOR_RECORDS = [
 ];
 
 const Q = SC.equipment.f;
-const eq = (id, label, type, location, status = 'In Service') => ({ id, fields: { [Q.id]: label, [Q.type]: { name: type }, [Q.location]: { name: location }, [Q.status]: { name: status } } });
+const eq = (id, label, type, location, status = 'In Service', tracking = true) => ({ id, fields: { [Q.id]: label, [Q.type]: { name: type }, [Q.location]: { name: location }, [Q.status]: { name: status }, [Q.tracking]: tracking } });
 export const EQUIPMENT_RECORDS = [
   eq('recEQP0000000001', '336-06', 'Excavator', 'Sadsbury'),
   eq('recEQP0000000002', 'D6K-01', 'Dozer', 'Sadsbury'),
@@ -108,6 +108,7 @@ export const EQUIPMENT_RECORDS = [
   eq('recEQP0000000008', '323-01', 'Excavator', 'HB Shop', 'Down for Maintenance'),
   eq('recEQP0000000009', 'Old Dozer', 'Dozer', 'HB Shop', 'Sold/Trade'),
   eq('recEQP0000000010', 'MHB-05', 'Manhole Box', 'Whitford WAWA'),
+  eq('recEQP0000000011', 'Old Plate', 'Steel Plate', 'HB Shop', 'In Service', false),   // not tracked: not in the Yard
 ];
 const M = SC.moves.f;
 export const MOVE_RECORDS = [
