@@ -1,6 +1,6 @@
 // A stand-in for the Airtable API, for tests and the local preview.
 // Names and phone numbers here are made up.
-import { EMPLOYEES as E, JOBS as J, SAFETY as S, VENDORS as V } from '../lib/config.mjs';
+import { EMPLOYEES as E, JOBS as J, SAFETY as S, VENDORS as V, SCHEDULE as SC } from '../lib/config.mjs';
 
 const emp = (id, name, pin, position, cell, status = 'Current Employee', location = 'SIte Contractors', more = {}) => ({
   id, fields: { [E.f.name]: name, [E.f.pin]: pin, [E.f.position]: { name: position }, [E.f.status]: { name: status }, [E.f.location]: { name: location }, [E.f.cell]: cell, ...more },
@@ -26,6 +26,33 @@ export const EMPLOYEE_RECORDS = [
   emp('recIwytS3JrkBVb12', 'Arment, Leon R.', '8080', 'Management', '(610) 636-7289'),
   emp('recbAiVcHKoqqVXYZ', 'Enck, Tyler L.', '8642', 'Shop', '(610) 555-0108', 'Current Employee', 'Paving'),
 ];
+
+// Daily Schedule: who is on the board, their short names, who gets the link, TextMagic contacts.
+const P = SC.people;
+const crew = (rec, short, more = {}) => {
+  const r = EMPLOYEE_RECORDS.find((x) => x.id === rec);
+  Object.assign(r.fields, { [P.include]: true, [P.scheduleName]: short, ...more });
+};
+crew('recEMP0000000002', 'Tony R.', { [P.textMagicId]: '5550002' });
+crew('recEMP0000000003', 'Sam B.', { [P.getsLink]: true, [P.textMagicId]: '5550003' });
+crew('recEMP0000000009', 'Gage S.');
+crew('recEMP0000000010', 'Chad S.');
+crew('recEMP0000000006', 'Lee C.', { [P.include]: false, [P.getsLink]: true });
+// Extra field crew for the schedule checks and the local preview (kept out of the other checks).
+let crewAdded = false;
+export function addScheduleCrew() {
+  if (crewAdded) return; crewAdded = true;
+  for (const [i, name, pos] of [
+  [21, 'Ortiz, Ray', 'Operator'], [22, 'Hall, Dee', 'Laborer'], [23, 'King, Bo', 'Laborer'], [24, 'Nash, Al', 'Operator'],
+  [25, 'Pike, Jo', 'Foreman'], [26, 'Reed, Kim', 'Driver'], [27, 'Vance, Cal', 'Laborer'], [28, 'Wolfe, Ty', 'Operator'],
+]) {
+  const id = `recEMP00000000${i}`;
+  EMPLOYEE_RECORDS.push(emp(id, name, '', pos, `(610) 555-01${i}`, 'Current Employee', 'SIte Contractors', {
+    [P.include]: true, [P.textMagicId]: i % 3 ? `55500${i}` : '',
+  }));
+  }
+}
+EMPLOYEE_RECORDS.find((r) => r.id === 'recu5oe4hLAB7KXLJ').fields[P.getsLink] = true;
 
 const job = (id, name, number, extra = {}) => ({ id, fields: { [J.f.name]: name, [J.f.number]: number, [J.f.active]: true, ...extra } });
 
@@ -68,12 +95,54 @@ export const VENDOR_RECORDS = [
   ven('recVEN0000000004', 'Knox Rental - West Chester', '421 E Market St, West Chester, PA 19382', '(610) 696-2996', 'Rental Store'),
 ];
 
+const Q = SC.equipment.f;
+const eq = (id, label, type, location, status = 'In Service') => ({ id, fields: { [Q.id]: label, [Q.type]: { name: type }, [Q.location]: { name: location }, [Q.status]: { name: status } } });
+export const EQUIPMENT_RECORDS = [
+  eq('recEQP0000000001', '336-06', 'Excavator', 'Sadsbury'),
+  eq('recEQP0000000002', 'D6K-01', 'Dozer', 'Sadsbury'),
+  eq('recEQP0000000003', 'TB20-07 (6)', 'Trench Box', 'Sadsbury'),
+  eq('recEQP0000000004', '730-06', 'Articulating Truck', 'Southern berks'),
+  eq('recEQP0000000005', '349-03', 'Excavator', 'Southern berks'),
+  eq('recEQP0000000006', '938-09', 'Rubber Tire Loader', 'HB Shop'),
+  eq('recEQP0000000007', 'CS54-01', 'Roller', 'HB Shop'),
+  eq('recEQP0000000008', '323-01', 'Excavator', 'HB Shop', 'Down for Maintenance'),
+  eq('recEQP0000000009', 'Old Dozer', 'Dozer', 'HB Shop', 'Sold/Trade'),
+  eq('recEQP0000000010', 'MHB-05', 'Manhole Box', 'Whitford WAWA'),
+];
+const M = SC.moves.f;
+export const MOVE_RECORDS = [
+  { id: 'recMOV0000000001', fields: { [M.equipment]: '938-09', [M.date]: '2026-11-10', [M.from]: 'HB Shop', [M.to]: 'Sadsbury', [M.status]: { name: 'Scheduled' }, [M.driver]: 'Reed', [M.truck]: '01-08' } },
+  { id: 'recMOV0000000002', fields: { [M.equipment]: '730-06', [M.date]: '2026-11-09', [M.from]: 'Southern berks', [M.to]: 'Sadsbury', [M.status]: { name: 'Complete' } } },
+];
+const T = SC.timeOff.f;
+export const TIMEOFF_RECORDS = [
+  { id: 'recOFF0000000001', fields: { [T.employee]: 'recEMP0000000022', [T.from]: '2026-11-10', [T.to]: '2026-11-11', [T.hours]: 8, [T.status]: { name: 'Approved' } } },
+  { id: 'recOFF0000000002', fields: { [T.employee]: 'recEMP0000000023', [T.from]: '2026-11-10', [T.to]: '2026-11-10', [T.hours]: 4 } },
+  { id: 'recOFF0000000003', fields: { [T.employee]: 'recEMP0000000027', [T.from]: '2026-11-12', [T.to]: '2026-11-12', [T.hours]: 8, [T.status]: { name: 'Requested' } } },
+  { id: 'recOFF0000000004', fields: { [T.employee]: 'recEMP0000000024', [T.from]: '2026-11-10', [T.to]: '2026-11-10', [T.hours]: 8, [T.status]: { name: 'Denied' } } },
+];
+const H = SC.haulers.f;
+export const HAULER_RECORDS = [
+  { id: 'recHAU0000000001', fields: { [H.name]: 'Risbon' } },
+  { id: 'recHAU0000000002', fields: { [H.name]: 'Quarry - Martin Stone' } },
+  { id: 'recHAU0000000003', fields: { [H.name]: 'Leary' } },
+];
+
+// Airtable formulas used by the app, enough to filter like Airtable would.
+function formulaFilter(formula, records, fieldOf) {
+  if (!formula) return records;
+  const wanted = [...formula.matchAll(/'([^']*)'/g)].map((m) => m[1]);
+  return records.filter((r) => wanted.includes(String(fieldOf(r) ?? '').slice(0, 10)) || wanted.includes(String(fieldOf(r) ?? '')));
+}
+
 // Safety base: an in-memory table so reports can be created, read, updated and given files.
 const TINY_JPG = 'https://fake.airtableusercontent.com/photo.jpg';
 export function fakeFetch({ fail = false } = {}) {
   const calls = [];
   const texts = [];
   const safety = new Map();
+  const days = new Map();
+  const log = [];
   let nextNum = 1;
   let nextId = 1;
   const json = (data, status = 200) => new Response(JSON.stringify(data), { status });
@@ -93,6 +162,30 @@ export function fakeFetch({ fail = false } = {}) {
       return json({ id: rec, fields: r.fields });
     }
     const [, , base, table, rec] = u.pathname.split('/');
+    const D = SC.days;
+    if (base === D.base && table === D.table) {
+      if (method === 'POST') {
+        const b = JSON.parse(opts.body);
+        const id = `recDAY${String(nextId++).padStart(11, '0')}`;
+        days.set(id, { id, fields: { ...b.fields } });
+        return json(days.get(id));
+      }
+      if (method === 'PATCH') {
+        const r = days.get(rec); if (!r) return json({}, 404);
+        for (const [k, v] of Object.entries(JSON.parse(opts.body).fields)) { if (v == null || v === '') delete r.fields[k]; else r.fields[k] = v; }
+        return json(r);
+      }
+      const f = u.searchParams.get('filterByFormula') || '';
+      const key = f.includes('Share Token') ? D.f.token : D.f.date;
+      return json({ records: formulaFilter(f, [...days.values()], (r) => r.fields[key]) });
+    }
+    if (base === SC.log.base && table === SC.log.table) {
+      if (method === 'POST') { const r = { id: `recLOG${String(nextId++).padStart(11, '0')}`, fields: JSON.parse(opts.body).fields }; log.push(r); return json(r); }
+      return json({ records: formulaFilter(u.searchParams.get('filterByFormula'), log, (r) => r.fields[SC.log.f.day]) });
+    }
+    if (base === SC.moves.base && table === SC.moves.table) {
+      return json({ records: formulaFilter(u.searchParams.get('filterByFormula'), MOVE_RECORDS, (r) => r.fields[M.date]) });
+    }
     if (base === S.base && table === S.table) {
       if (method === 'POST') {
         const b = JSON.parse(opts.body);
@@ -114,7 +207,10 @@ export function fakeFetch({ fail = false } = {}) {
     }
     const records = base === V.base && table === V.table ? VENDOR_RECORDS
       : base === E.base && table === E.table ? EMPLOYEE_RECORDS
-      : base === J.base && table === J.table ? JOB_RECORDS : null;
+      : base === J.base && table === J.table ? JOB_RECORDS
+      : base === SC.equipment.base && table === SC.equipment.table ? EQUIPMENT_RECORDS
+      : base === SC.timeOff.base && table === SC.timeOff.table ? TIMEOFF_RECORDS
+      : base === SC.haulers.base && table === SC.haulers.table ? HAULER_RECORDS : null;
     if (!records) return new Response('{}', { status: 404 });
     // two pages to exercise paging
     const offset = Number(u.searchParams.get('offset') || 0);
@@ -125,6 +221,8 @@ export function fakeFetch({ fail = false } = {}) {
   fn.calls = calls;
   fn.texts = texts;
   fn.safety = safety;
+  fn.days = days;
+  fn.log = log;
   return fn;
 }
 

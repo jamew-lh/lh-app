@@ -19,6 +19,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **Our Values** (home screen; tap one for details) and the **mission** in the footer: edit `VALUES` and `MISSION` at the top of `public/app.js`
 - **Vendors** (Field Reference): every row in the **Vendors** base, grouped by Type, with call and directions buttons
 - People with the same last name (the Smokers) each sign in with their own PIN
+- **Daily Schedule** (Dispatch section): the drag-and-drop crew board, only for the editors in `SCHEDULE.editors` (see the Daily Schedule section below)
 
 ---
 
@@ -27,8 +28,9 @@ bases and never changes them. It runs on Netlify, like the other apps.
 1. Go to <https://airtable.com/create/tokens> and click **Create new token**.
 2. Name it `L&H App`.
 3. **Scopes:** add `data.records:read` and `data.records:write`.
-4. **Access:** add these four bases: **Emloyees**, **Job Name List**, **Safety** and **Vendors**.
-   The app only ever writes to the **Safety** base (incident reports); it only reads the other two.
+4. **Access:** add these bases: **Emloyees**, **Job Name List**, **Safety**, **Vendors**,
+   **LH Equipment**, **Timecards** and **Daily Schedules**.
+   The app only writes to **Safety** (incident reports) and **Daily Schedules** (the crew schedule); it only reads the others.
 5. Click **Create token** and copy it. You'll paste it into Netlify in step 3.
    Don't email it or paste it anywhere else.
 
@@ -110,3 +112,37 @@ with photos and a finger signature. Saved in the **Safety** base → **Incident 
 - **Office only:** Drug test, Alcohol test and Office Notes (Management, James, Lisa).
 - **Download PDF** on any report: laid out like the paper form, signatures included, photos on extra pages.
 - Settings (who files / reviews / gets texts): `SAFETY` in `lib/config.mjs`.
+
+## Daily Schedule (Dispatch → Daily Schedule)
+
+The daily crew sheet as a drag-and-drop board, on a full-width page. Built for a computer;
+it also works on a tablet.
+
+- **Who:** only the editors listed in `SCHEDULE.editors` in `lib/config.mjs` (James Woodard,
+  Bob Arment, Mike Hohl, Mike Wallace). Add someone's Employee List record ID there to let them
+  cover. Everyone else never sees it.
+- **People on the board:** everyone with **Include on Schedule** checked in the Employee List,
+  shown by their **Schedule Name** (or first name + last initial when it's blank).
+- **Jobs:** active jobs from the Job Name List. **Equipment:** from LH Equipment → Equipment Info.
+  Its Location decides which job a machine starts at; names that don't match a job are in
+  `SCHEDULE.locationToJob` (e.g. "TOA 3" → TOA III). Down for Maintenance = Repair.
+- **Each day starts as a copy of the last saved day.** People with approved time off that day
+  (timecard app → Scheduled Time Off) are taken off their job; part days and requests show as
+  warnings. Equipment moves entered in the equipment app for that day are applied.
+  The very first day starts clean: jobs and equipment only.
+- **Saving:** automatic, about a second after each change, to Daily Schedules → **Schedule Days**
+  (one row per day). If two editors change the same day, the second one is told and gets the
+  newer version; nothing is overwritten. Every change is listed in **Schedule Log** (History button).
+- **Hired trucks:** haulers from Vendors → **Hired Trucks**. Drag one onto a job: trucks, type,
+  material, from → to, time, note. No texts go to haulers.
+- **Material / other moves:** kept with that day only (Drivers / Moves panel).
+- **Texts:** anyone whose job, personal note or job note changed since the last saved day gets
+  a **txt** tag. Texts → review / edit → send through TextMagic, to the person's TextMagic contact
+  (TextMagic Contact ID, filled by the timecard app) or their Cell Phone.
+- **Publish:** *Copy for email* (paste into Outlook), *Print / PDF*, and a **no-sign-in link**
+  (`/day.html?k=…`) that works for 4 days after the first publish (`SCHEDULE.shareDays`).
+  *Text link* sends it to everyone with **Daily Schedule** checked in the Employee List.
+  Re-publishing keeps the same link. *Turn off link* (or clearing Share Token in Airtable) stops it.
+  The shared page has names, jobs and equipment only — no phone numbers.
+
+Local preview: sign in as `Woodard` / `6060` to see the schedule with made-up data.
