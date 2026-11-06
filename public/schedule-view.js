@@ -125,6 +125,10 @@ export function stackCards(box, minWidth = 260, gap = 12) {
   cards.sort((a, b) => Number(a.dataset.mi) - Number(b.dataset.mi));
   box.classList.add('stacked');
   const n = Math.max(1, Math.floor((box.clientWidth + gap) / (minWidth + gap)));
+  // Phones fire "resize" when the address bar hides or shows while scrolling. Same column count: nothing to do.
+  if (!loose.length && box.querySelectorAll(':scope > .mcol').length === n) return;
+  // Hold the height while the cards move, so the page doesn't shrink and jump back to the top.
+  box.style.minHeight = `${box.offsetHeight}px`;
   const cols = Array.from({ length: n }, () => { const d = document.createElement('div'); d.className = 'mcol'; return d; });
   box.replaceChildren(...cols);
   for (const c of cards) {
@@ -132,6 +136,7 @@ export function stackCards(box, minWidth = 260, gap = 12) {
     for (const col of cols) if (col.offsetHeight < best.offsetHeight) best = col;
     best.appendChild(c);
   }
+  box.style.minHeight = '';
 }
 
 /** Plain text version (for the clipboard alongside the HTML). */
