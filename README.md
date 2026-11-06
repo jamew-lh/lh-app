@@ -137,6 +137,10 @@ it also works on a tablet.
 - **Saving:** automatic, about a second after each change, to Daily Schedules → **Schedule Days**
   (one row per day). If two editors change the same day, the second one is told and gets the
   newer version; nothing is overwritten. Every change is listed in **Schedule Log** (History button).
+- **Click a name** to change where they work (any job on the day, Landscaping Crew, Off, Shop,
+  Drivers, Not scheduled, or a job not on the day yet — it gets added), their role, machine and note.
+- **Landscaping Crew:** always there, at the top of the right side. Crew, equipment and a note,
+  like a job; it's on the texts, email, print and link.
 - **Hired trucks:** haulers from Vendors → **Hired Trucks**. Drag one onto a job: trucks, type,
   material, from → to, time, note. No texts go to haulers.
 - **Material / other moves:** kept with that day only (Drivers / Moves panel).
