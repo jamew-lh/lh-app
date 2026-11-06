@@ -83,6 +83,18 @@ test('day: vacations from the timecard app (approved, half day, requested; denie
   assert.equal((await call('GET', '/api/schedule/day?date=nope', { cookie })).status, 400);
 });
 
+test('day: machines moved in the equipment app (Change Log "Location"), oldest first, mapped to jobs', async () => {
+  const { cookie } = await editor();
+  const r = await call('GET', `/api/schedule/day?date=${D}`, { cookie });
+  assert.deepEqual(r.data.eqChanges.map((c) => [c.equipment, c.toJob]), [['CS54-01', 'recJOB0000000006'], ['349-03', '']]);
+  assert.ok(r.data.eqChanges[0].when < r.data.eqChanges[1].when);
+  // a saved day reports when it was created and keeps its sync point
+  await call('PUT', `/api/schedule/day?date=${D}`, { cookie, body: { board: board({ eqSyncAt: '2026-11-06T14:48:53.170Z' }), version: 0 } });
+  const again = await call('GET', `/api/schedule/day?date=${D}`, { cookie });
+  assert.ok(again.data.day.created);
+  assert.equal(again.data.day.board.eqSyncAt, '2026-11-06T14:48:53.170Z');
+});
+
 test('saving: versions stop two editors overwriting each other, and changes are logged', async () => {
   const a = await editor();
   const b = await login('Arment', '8080');
@@ -162,6 +174,7 @@ test('change log wording', () => {
   const a = { jobs: ['j1', 'j2'], people: { j1: [{ id: 'p1' }] }, equip: { j1: ['e1'] } };
   const b = { jobs: ['j1', 'j2'], people: { j2: [{ id: 'p1' }] }, equip: {}, jobNotes: { j2: 'Start 6:30' } };
   assert.deepEqual(describeChanges(a, b, names), ['Tom C.: Valley Creek → TOA III', 'D5-01: Valley Creek → Yard', 'Job note for TOA III: "Start 6:30"']);
+  assert.deepEqual(describeChanges(b, { ...b, equip: { j2: ['e1'] } }, names), ['D5-01: Yard → TOA III']);
   assert.deepEqual(describeChanges(null, b, names), ['Started this day.']);
 });
 

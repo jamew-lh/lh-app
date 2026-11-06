@@ -129,6 +129,10 @@ it also works on a tablet.
 - **Each day starts as a copy of the last saved day.** People with approved time off that day
   (timecard app → Scheduled Time Off) are taken off their job; part days and requests show as
   warnings. Equipment moves entered in the equipment app for that day are applied.
+- **Machines moved in the equipment app show up on the board.** When you open today or a later
+  day, any location change in the equipment app's Change Log since that day last caught up is applied
+  (a banner lists them). Past days are not changed. A Location edited straight in Airtable (not
+  through the equipment app) isn't in the Change Log, so it won't be picked up — move it on the board.
   The very first day starts clean: jobs and equipment only.
 - **Saving:** automatic, about a second after each change, to Daily Schedules → **Schedule Days**
   (one row per day). If two editors change the same day, the second one is told and gets the
