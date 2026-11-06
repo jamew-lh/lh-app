@@ -1,5 +1,6 @@
 // Lyons & Hohl landing app.
 import { initIncidents, showIncidents, showIncidentForm, showIncident } from './incident.js';
+import { initSchedule, showSchedule, flushSchedule } from './schedule.js';
 // ---------------------------------------------------------------------------
 // LINKS — edit these to change where the buttons go.
 // ---------------------------------------------------------------------------
@@ -247,6 +248,10 @@ function showHome() {
         <summary class="linklist-head"><span class="ic">${I.codes}</span><span class="txt"><b>E&amp;S Reports</b><small>Pick a job · ${LINKS.esReports.length} forms</small></span>${I.chev}</summary>
         ${LINKS.esReports.map(([name, url]) => `<a class="linkrow" href="${url}" target="_blank" rel="noopener"><span>${esc(name)}</span>${I.ext}</a>`).join('')}
       </details>` : ''}
+      ${me.schedule ? `<div class="section-title">Dispatch</div>
+      <div class="tiles">
+        ${tile({ go: 'schedule', icon: 'jobs', title: 'Daily Schedule', sub: 'Crews, equipment and trucks by job', cls: 'office wide' })}
+      </div>` : ''}
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">
         ${tile({ href: me.calendarUrl, icon: 'sun', title: 'Vacation Calendar', sub: 'Who is off, month by month', cls: 'office wide', external: true })}
@@ -573,11 +578,16 @@ async function showPhones() {
 }
 
 initIncidents({ app, api, esc, I, bar, footer, me: () => me, loadJobs });
+initSchedule({ app, api, esc, I, me: () => me, LINKS });
 
 // ------------------------------- Router ------------------------------------
 function route() {
   if (!me) return showLogin();
   const h = location.hash.replace(/^#\/?/, '');
+  const sched = h === 'schedule' || h.startsWith('schedule/');
+  document.body.classList.toggle('sched-on', sched);
+  if (sched) return showSchedule(h.split('/')[1]);
+  flushSchedule();   // save any change still waiting when leaving the schedule
   if (h === 'jobs') return showJobs();
   if (h.startsWith('job/')) return showJob(h.slice(4));
   if (h === 'phones') return showPhones();

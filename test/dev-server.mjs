@@ -1,14 +1,17 @@
 // Local preview with made-up data: `npm run dev`, then open http://localhost:8899
-// Sign in as Walker / 1234 (office), Rivera / 4321 (operator).
+// Sign in as Walker / 1234 (office), Rivera / 4321 (operator), Woodard / 6060 (Daily Schedule editor).
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handle } from '../lib/app.mjs';
-import { fakeFetch } from './fake-airtable.mjs';
+import { fakeFetch, addScheduleCrew } from './fake-airtable.mjs';
+
+addScheduleCrew();
 
 const root = fileURLToPath(new URL('../public/', import.meta.url));
-const env = { AIRTABLE_TOKEN: 'patFAKE', SESSION_SECRET: 'local-preview-secret-0123456789' };
+// TextMagic values are placeholders: fakeFetch catches every text, nothing is really sent.
+const env = { AIRTABLE_TOKEN: 'patFAKE', SESSION_SECRET: 'local-preview-secret-0123456789', TEXTMAGIC_USERNAME: 'preview', TEXTMAGIC_API_KEY: 'preview' };
 const fetchImpl = fakeFetch();
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 const port = Number(process.env.PORT || 8899);
