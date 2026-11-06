@@ -19,7 +19,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **Our Values** (home screen; tap one for details) and the **mission** in the footer: edit `VALUES` and `MISSION` at the top of `public/app.js`
 - **Vendors** (Field Reference): every row in the **Vendors** base, grouped by Type, with call and directions buttons
 - People with the same last name (the Smokers) each sign in with their own PIN
-- **Daily Schedule** (Dispatch section): the drag-and-drop crew board, only for the editors in `SCHEDULE.editors` (see the Daily Schedule section below)
+- **Daily Schedule** (Dispatch section): the drag-and-drop crew board, only for people with **Schedule Editor** checked in the Employee List (see the Daily Schedule section below)
 
 ---
 
@@ -118,9 +118,9 @@ with photos and a finger signature. Saved in the **Safety** base → **Incident 
 The daily crew sheet as a drag-and-drop board, on a full-width page. Built for a computer;
 it also works on a tablet.
 
-- **Who:** only the editors listed in `SCHEDULE.editors` in `lib/config.mjs` (James Woodard,
-  Bob Arment, Mike Hohl, Mike Wallace). Add someone's Employee List record ID there to let them
-  cover. Everyone else never sees it.
+- **Who:** only people with **Schedule Editor** checked in the Employee List (James Woodard, Bob Arment,
+  Mike Hohl, Mike Wallace). To let someone cover, check the box; it takes effect within 5 minutes
+  (or right away after they tap Refresh). Everyone else never sees it.
 - **People on the board:** everyone with **Include on Schedule** checked in the Employee List,
   shown by their **Schedule Name** (or first name + last initial when it's blank).
 - **Jobs:** active jobs from the Job Name List. **Equipment:** from LH Equipment → Equipment Info.

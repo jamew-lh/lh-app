@@ -42,7 +42,7 @@ Decisions James made (keep them unless he changes them):
 
 | Topic | Decision |
 |---|---|
-| Editors | James Woodard, Bob (Leon) Arment, Mike Hohl, Mike Wallace — `SCHEDULE.editors`. Others may cover when James is on vacation. |
+| Editors | **Schedule Editor** checkbox in the Employee List (James Woodard, Bob (Leon) Arment, Mike Hohl, Mike Wallace). Others may cover when James is on vacation. |
 | First day | Start clean: jobs + equipment from the equipment app, no people. Never import the Excel sheet. Later days copy the last saved day. |
 | People | **Include on Schedule** checkbox; display **Schedule Name**. Rushane Davis-Morgan is intentionally off. |
 | Vacations | Timecard app → Scheduled Time Off. Approved/blank = off (removed on copy-forward); Requested = heads-up only; Denied = ignored; Hours per Day < 8 = part day. |
