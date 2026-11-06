@@ -53,6 +53,8 @@ export function addScheduleCrew() {
   }
 }
 EMPLOYEE_RECORDS.find((r) => r.id === 'recu5oe4hLAB7KXLJ').fields[P.getsLink] = true;
+// Schedule editors (the "Schedule Editor" checkbox): James Woodard and Bob Arment.
+for (const id of ['recu5oe4hLAB7KXLJ', 'recIwytS3JrkBVb12']) EMPLOYEE_RECORDS.find((r) => r.id === id).fields[E.f.scheduleEditor] = true;
 
 const job = (id, name, number, extra = {}) => ({ id, fields: { [J.f.name]: name, [J.f.number]: number, [J.f.active]: true, ...extra } });
 

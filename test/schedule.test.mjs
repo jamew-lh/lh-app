@@ -46,6 +46,8 @@ test('only the schedule editors can open the Daily Schedule', async () => {
   assert.equal((await call('GET', `/api/schedule/day?date=${D}`, { cookie: office.cookie })).status, 403);
   assert.equal((await call('PUT', `/api/schedule/day?date=${D}`, { cookie: office.cookie, body: { board: board(), version: 0 } })).status, 403);
   assert.equal((await call('GET', '/api/schedule/setup')).status, 401);
+  // Management without the checkbox can't (it's the checkbox, not the position)
+  assert.equal((await login('Boss', '3333')).person.schedule, false);
 });
 
 test('setup: people with schedule names and no phone numbers, equipment placed at jobs', async () => {
