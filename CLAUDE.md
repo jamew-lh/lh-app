@@ -44,7 +44,7 @@ Decisions James made (keep them unless he changes them):
 |---|---|
 | Editors | **Schedule Editor** checkbox in the Employee List (James Woodard, Bob (Leon) Arment, Mike Hohl, Mike Wallace). Others may cover when James is on vacation. |
 | First day | Start clean: jobs + equipment from the equipment app, no people. Never import the Excel sheet. Later days copy the last saved day. |
-| People | **Include on Schedule** checkbox; display **Schedule Name**. Rushane Davis-Morgan is intentionally off. |
+| People | **Include on Schedule** checkbox; display **Schedule Name**. Rushane Davis-Morgan is intentionally off. Anyone made Past Employee or unchecked comes off today and later days automatically (past days untouched). |
 | Vacations | Timecard app → Scheduled Time Off. Approved/blank = off (removed on copy-forward); Requested = heads-up only; Denied = ignored; Hours per Day < 8 = part day. |
 | Hired trucks | Vendors → Hired Trucks (quarries included). Count, type, material, from/to, time, note per job. **No texts to haulers.** |
 | Equipment moves | The equipment app is the source of truth for where machines are. Its Change Log "Location" entries are applied to **today and later** days when they open (`board.eqSyncAt` remembers the last one applied; past days are left alone). That day's Moves table entries are applied when a day is created. The board does **not** write Moves (not asked for yet). |

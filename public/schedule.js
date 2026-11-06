@@ -149,6 +149,20 @@ function syncEquipment(b, since, date) {
   b.eqSyncAt = list[list.length - 1].when;
   return done;
 }
+// People marked Past Employee, or with "Include on Schedule" unchecked, come off today and later days.
+// Past days stay as they were.
+function dropRemovedPeople(b, date) {
+  if (date < todayNY()) return 0;
+  let n = 0;
+  for (const [loc, list] of Object.entries(b.people)) {
+    b.people[loc] = list.filter((a) => {
+      const keep = !!S.people[a.id]?.include;
+      if (!keep) n++;
+      return keep;
+    });
+  }
+  return n;
+}
 function buildNewDay(date) {
   if (S.prev) {
     const b = normalize(clone(S.prev.board));
@@ -162,6 +176,7 @@ function buildNewDay(date) {
       if (loc === 'DRIVERS') for (const a of b.people[loc]) a.note = '';
     }
     b.moves = [];
+    dropRemovedPeople(b, date);
     const synced = syncEquipment(b, S.prev.board.eqSyncAt || S.prev.created, date);
     const moved = [...new Set([...synced, ...applyEquipmentMoves(b, S.moves)])];
     const msg = [`Started ${short(date)} as a copy of ${short(S.prev.date)}. Just move what changes.`];
@@ -256,8 +271,9 @@ export async function showSchedule(dateArg) {
     if (r.day?.board) {
       Object.assign(S, { board: normalize(r.day.board), version: r.day.version, isNew: false, banner: '' });
       const synced = syncEquipment(S.board, r.day.board.eqSyncAt || r.day.created, date);
-      if (synced.length) {
-        S.banner = `<b>Updated from the equipment app:</b> ${[...new Set(synced)].map(esc).join(', ')}.`;
+      const dropped = dropRemovedPeople(S.board, date);
+      if (synced.length || dropped) {
+        if (synced.length) S.banner = `<b>Updated from the equipment app:</b> ${[...new Set(synced)].map(esc).join(', ')}.`;
         S.dirty = true;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(saveNow, 600);
