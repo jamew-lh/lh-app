@@ -25,9 +25,21 @@ export function otherMoveText(m) {
   return [m.what, route, m.by && `by ${m.by}`, m.time, m.note].filter(Boolean).join(' · ');
 }
 
+// Equipment moves from the equipment app (Moves table) for the day.
+const nameKey = (s) => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+export function eqMoveText(m, withDriver = false) {
+  const truck = m.truck && nameKey(m.truck) !== nameKey(m.driver) ? `truck ${m.truck}` : '';
+  const status = m.status && !/^scheduled$/i.test(m.status) ? m.status : '';
+  return [withDriver && m.driver ? `${m.driver}:` : '', m.equipment, `${m.from || '?'} → ${m.to || '?'}`, truck, status]
+    .filter(Boolean).join(' ');
+}
+/** The moves whose Driver matches this name ("Dan I" matches "Dan I."). */
+export const movesForDriver = (moves, name) => (moves || []).filter((m) => m.driver && nameKey(m.driver) === nameKey(name));
+
 /**
  * d = { date, board, people: {id: {name}}, jobs: {id: {name, number, supervisor, address}},
- *       equipment: {id: {label}}, haulers: {id: {name}}, vacation: [{person, half}], updatedAt }
+ *       equipment: {id: {label}}, haulers: {id: {name}}, vacation: [{person, half}], updatedAt,
+ *       eqMoves: [{ equipment, from, to, driver, truck, status }] }
  */
 export function dayHtml(d, mode = 'page') {
   const email = mode === 'email';
@@ -65,11 +77,27 @@ export function dayHtml(d, mode = 'page') {
       + list('Hired trucks', haul.join(''))
       + list('Equipment', eq.length ? para(esc(eq.join(', '))) : '')));
   }
-  for (const loc of ['OFF', 'SHOP', 'DRIVERS']) {
+  for (const loc of ['OFF', 'SHOP']) {
     const crew = b.people?.[loc] || [];
-    const extra = loc === 'DRIVERS' ? (b.moves || []).map((m) => para(esc(otherMoveText(m)))).join('') : '';
-    if (!crew.length && !extra) continue;
-    blocks.push(block(SPECIAL[loc], '', table(crew.map(crewRow).join('')) + list(loc === 'DRIVERS' ? 'Material / other moves' : '', extra)));
+    if (crew.length) blocks.push(block(SPECIAL[loc], '', table(crew.map(crewRow).join(''))));
+  }
+  // Drivers / Moves: each driver with their equipment moves under them, then moves for other drivers
+  // (hired trucks, people not in Drivers), then material / other moves.
+  {
+    const drivers = b.people?.DRIVERS || [];
+    const eqMoves = d.eqMoves || [];
+    const claimed = new Set();
+    const sub = (t) => `<tr><td></td><td ${s('v-what', 'padding:1px 0 3px;color:#17201F;vertical-align:top')}>${esc(t)}</td></tr>`;
+    const rows = drivers.map((a) => {
+      const mine = movesForDriver(eqMoves, P(a.id));
+      mine.forEach((m) => claimed.add(m));
+      return crewRow(a) + mine.map((m) => sub(eqMoveText(m))).join('');
+    }).join('');
+    const others = eqMoves.filter((m) => !claimed.has(m)).map((m) => para(esc(eqMoveText(m, true)))).join('');
+    const material = (b.moves || []).map((m) => para(esc(otherMoveText(m)))).join('');
+    if (rows || others || material) {
+      blocks.push(block(SPECIAL.DRIVERS, '', table(rows) + list(rows ? 'Other equipment moves' : 'Equipment moves', others) + list('Material / other moves', material)));
+    }
   }
   const vac = (d.vacation || []).map((v) => `${esc(P(v.person))}${v.half ? ' (part day)' : ''}`);
   if (vac.length) blocks.push(block('Vacation', '', para(vac.join(', '))));
@@ -99,10 +127,20 @@ export function dayText(d) {
     for (const h of b.haul?.[jid] || []) lines.push(`  Truck: ${haulText(h, d.haulers[h.hauler]?.name)}`);
     lines.push('');
   }
-  for (const loc of ['OFF', 'SHOP', 'DRIVERS']) {
-    if (!(b.people?.[loc] || []).length && !(loc === 'DRIVERS' && (b.moves || []).length)) continue;
-    lines.push(SPECIAL[loc], ...crew(b.people[loc]));
-    if (loc === 'DRIVERS') for (const m of b.moves || []) lines.push(`  Move: ${otherMoveText(m)}`);
+  for (const loc of ['OFF', 'SHOP']) {
+    if (!(b.people?.[loc] || []).length) continue;
+    lines.push(SPECIAL[loc], ...crew(b.people[loc]), '');
+  }
+  const eqMoves = d.eqMoves || [];
+  if ((b.people?.DRIVERS || []).length || eqMoves.length || (b.moves || []).length) {
+    lines.push(SPECIAL.DRIVERS);
+    const claimed = new Set();
+    for (const a of b.people?.DRIVERS || []) {
+      lines.push(...crew([a]));
+      for (const m of movesForDriver(eqMoves, P(a.id))) { claimed.add(m); lines.push(`    ${eqMoveText(m)}`); }
+    }
+    for (const m of eqMoves.filter((x) => !claimed.has(x))) lines.push(`  ${eqMoveText(m, true)}`);
+    for (const m of b.moves || []) lines.push(`  Move: ${otherMoveText(m)}`);
     lines.push('');
   }
   if ((d.vacation || []).length) lines.push(`Vacation: ${d.vacation.map((v) => P(v.person)).join(', ')}`);

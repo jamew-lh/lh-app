@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate } from './schedule-view.js';
+import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -82,10 +82,13 @@ function locOf(b, pid) {
 const equipLocs = (b, eid) => Object.entries(b.equip || {}).filter(([, l]) => (l || []).includes(eid)).map(([loc]) => loc);
 
 // ------------------------------------------------------------------ texts: who changed since the last saved day
+// A driver's equipment moves for the day count like a job note: new or changed moves flag a text.
+const driverMoves = (pid) => movesForDriver(S.moves, personName(pid)).map((m) => eqMoveText(m)).join('; ');
 function spotKey(b, pid) {
   const hit = locOf(b, pid);
   if (!hit) return null;
-  return { loc: hit.loc, note: hit.a.note || '', jobNote: isJob(hit.loc) ? (b.jobNotes?.[hit.loc] || '') : '' };
+  const jobNote = isJob(hit.loc) ? (b.jobNotes?.[hit.loc] || '') : (hit.loc === 'DRIVERS' && b === S.board ? driverMoves(pid) : '');
+  return { loc: hit.loc, note: hit.a.note || '', jobNote };
 }
 function textStatus(pid) {
   if (!S.prev) return null;
@@ -812,7 +815,10 @@ function draftText(t) {
   const note = a.note ? ` ${a.note.replace(/\.?$/, '.')}` : '';
   if (t.loc === 'OFF') return `L&H: You are OFF ${when}.${note}`;
   if (t.loc === 'SHOP') return `L&H: ${when} report to the shop.${note}`;
-  if (t.loc === 'DRIVERS') return `L&H: ${when} you're driving.${note} Check the equipment app for moves.`;
+  if (t.loc === 'DRIVERS') {
+    const mv = driverMoves(t.pid);
+    return `L&H: ${when} you're driving.${mv ? ` Moves: ${mv}.` : ' Check the equipment app for moves.'}${note}`;
+  }
   if (t.loc === 'LANDSCAPE') {
     const lf = a.role === 'Foreman' ? ' You are running the crew.' : (foremanAt(t.loc, t.pid) ? ` Foreman: ${foremanAt(t.loc, t.pid)}.` : '');
     const lr = a.machine && S.equip[a.machine] ? ` You're on ${S.equip[a.machine].label}.` : '';
@@ -830,7 +836,8 @@ function draftText(t) {
 function whyText(t) {
   if (!t.was) return `not scheduled → ${locName(t.loc)}`;
   if (t.was.loc !== t.loc) return `${locName(t.was.loc)} → ${locName(t.loc)}`;
-  return t.now.note !== t.was.note ? `${locName(t.loc)} · their note changed` : `${locName(t.loc)} · job note changed`;
+  if (t.now.note !== t.was.note) return `${locName(t.loc)} · their note changed`;
+  return t.loc === 'DRIVERS' ? 'Drivers · moves for the day' : `${locName(t.loc)} · job note changed`;
 }
 async function openTexts() {
   if (!S.prev) {
@@ -876,7 +883,7 @@ async function openTexts() {
 // ------------------------------------------------------------------ publish: email, print, link
 function viewData() {
   const vac = S.timeOff.filter((t) => t.date === S.date && !t.requested).map((t) => ({ person: t.person, half: t.half }));
-  return { date: S.date, board: S.board, people: S.people, jobs: S.jobs, equipment: S.equip, haulers: S.haulers, vacation: vac };
+  return { date: S.date, board: S.board, people: S.people, jobs: S.jobs, equipment: S.equip, haulers: S.haulers, vacation: vac, eqMoves: S.moves };
 }
 async function copyForEmail() {
   const d = viewData();

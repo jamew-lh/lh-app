@@ -4,6 +4,7 @@ import { handle } from '../lib/app.mjs';
 import { clearCache, resetForceFresh } from '../lib/store.mjs';
 import { resetThrottle } from '../lib/auth.mjs';
 import { describeChanges, addWorkdays } from '../lib/schedule.mjs';
+import { dayHtml, dayText } from '../public/schedule-view.js';
 import { fakeFetch, addScheduleCrew } from './fake-airtable.mjs';
 
 addScheduleCrew();
@@ -186,4 +187,25 @@ test('workdays skip weekends', () => {
   assert.equal(addWorkdays('2026-11-06', 1), '2026-11-09');
   assert.equal(addWorkdays('2026-11-09', -1), '2026-11-06');
   assert.equal(addWorkdays('2026-11-10', -3), '2026-11-05');
+});
+
+test('email / print / link: equipment moves listed under their driver, others after', () => {
+  const d = {
+    date: '2026-11-09',
+    board: { jobs: [], people: { DRIVERS: [{ id: 'p1' }] }, equip: {}, moves: [{ what: '20 pcs RCP', from: 'Shop', to: 'Odessa' }] },
+    people: { p1: { name: 'Jared E.' } }, jobs: {}, equipment: {}, haulers: {}, vacation: [],
+    eqMoves: [
+      { equipment: '349-02', from: 'TOA 3', to: '1201 Colllegeville', driver: 'Jared E', truck: '01-08', status: 'Scheduled' },
+      { equipment: '335-01', from: 'Brandywine Walk', to: 'Sadsbury', driver: 'Blair', truck: 'Blair', status: 'Scheduled' },
+    ],
+  };
+  const text = dayText(d);
+  assert.match(text, /Jared E\.\n {4}349-02 TOA 3 → 1201 Colllegeville truck 01-08/);
+  assert.match(text, /  Blair: 335-01 Brandywine Walk → Sadsbury\n/);
+  assert.match(text, /Move: 20 pcs RCP/);
+  const html = dayHtml(d, 'email');
+  assert.match(html, /Blair: 335-01 Brandywine Walk → Sadsbury/);
+  assert.match(html, /Other equipment moves/);
+  // no drivers on the board: moves still show
+  assert.match(dayHtml({ ...d, board: { jobs: [], people: {}, equip: {} } }, 'email'), /Equipment moves.*Jared E: 349-02/s);
 });
