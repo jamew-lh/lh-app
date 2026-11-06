@@ -21,7 +21,7 @@ const byId = (list) => Object.fromEntries((list || []).map((x) => [x.id, x]));
   const until = new Date(data.expires).toLocaleString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   box.innerHTML = dayHtml({
     date: data.date, board: data.board, people: byId(data.people), jobs: byId(data.jobs),
-    equipment: byId(data.equipment), haulers: byId(data.haulers), vacation: data.vacation,
+    equipment: byId(data.equipment), haulers: byId(data.haulers), vacation: data.vacation, eqMoves: data.eqMoves,
   }, 'share') + `<p class="v-foot">${updated ? `Updated ${esc(updated)} · ` : ''}This link works until ${esc(until)}.</p>`;
   const p = document.getElementById('print');
   p.hidden = false;

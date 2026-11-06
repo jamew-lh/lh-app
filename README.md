@@ -145,6 +145,10 @@ it also works on a tablet.
 - **Hired trucks:** haulers from Vendors → **Hired Trucks**. Drag one onto a job: trucks, type,
   material, from → to, time, note. No texts go to haulers.
 - **Material / other moves:** kept with that day only (Drivers / Moves panel).
+- **Equipment moves** entered in the equipment app for the day are on the email, print and link
+  under Drivers / Moves: listed under the driver whose Schedule Name matches the move's Driver
+  ("Dan I" = "Dan I."), and the rest (hired trucks, drivers not on the board) after. A driver's
+  moves also go in their text, and new or changed moves flag them for a text.
 - **Texts:** anyone whose job, personal note or job note changed since the last saved day gets
   a **txt** tag. Texts → review / edit → send through TextMagic, to the person's TextMagic contact
   (TextMagic Contact ID, filled by the timecard app) or their Cell Phone.
