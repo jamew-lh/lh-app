@@ -7,6 +7,7 @@
 //   haul: { jobId: [{ id, hauler, trucks, kind, material, from, to, time, note }] }
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
+//   eqSyncAt: time of the last equipment-app location change applied to this day
 import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate } from './schedule-view.js';
 
 let C;
@@ -134,6 +135,16 @@ function applyEquipmentMoves(b, moves) {
   }
   return done;
 }
+// Machines moved in the equipment app (Change Log "Location") since this day last caught up.
+// Only for today and later: past days stay as they were.
+function syncEquipment(b, since, date) {
+  if (date < todayNY()) return [];
+  const list = (S.eqChanges || []).filter((c) => c.when > (since || ''));
+  if (!list.length) return [];
+  const done = applyEquipmentMoves(b, list);
+  b.eqSyncAt = list[list.length - 1].when;
+  return done;
+}
 function buildNewDay(date) {
   if (S.prev) {
     const b = normalize(clone(S.prev.board));
@@ -147,7 +158,8 @@ function buildNewDay(date) {
       if (loc === 'DRIVERS') for (const a of b.people[loc]) a.note = '';
     }
     b.moves = [];
-    const moved = applyEquipmentMoves(b, S.moves);
+    const synced = syncEquipment(b, S.prev.board.eqSyncAt || S.prev.created, date);
+    const moved = [...new Set([...synced, ...applyEquipmentMoves(b, S.moves)])];
     const msg = [`Started ${short(date)} as a copy of ${short(S.prev.date)}. Just move what changes.`];
     if (removed.length) msg.push(`<b>Taken off for vacation:</b> ${removed.map(esc).join(', ')}.`);
     if (moved.length) msg.push(`<b>Equipment moves from the equipment app:</b> ${moved.map(esc).join(', ')}.`);
@@ -156,6 +168,7 @@ function buildNewDay(date) {
   }
   // The very first day: jobs and equipment from the equipment app, no people yet.
   const b = emptyBoard();
+  b.eqSyncAt = new Date().toISOString();
   for (const e of S.setup.equipment) {
     if (!e.job || !S.jobs[e.job] || e.down) continue;
     if (!b.jobs.includes(e.job)) { b.jobs.push(e.job); b.people[e.job] = []; b.equip[e.job] = []; }
@@ -230,9 +243,16 @@ export async function showSchedule(dateArg) {
   try {
     if (!S?.setup) S = { ...indexSetup(await C.api('schedule/setup')) };
     const r = await C.api(`schedule/day?date=${date}`);
-    Object.assign(S, { date, prev: r.prev, timeOff: r.timeOff, moves: r.moves, day: r.day, dirty: false });
+    Object.assign(S, { date, prev: r.prev, timeOff: r.timeOff, moves: r.moves, eqChanges: r.eqChanges || [], day: r.day, dirty: false });
     if (r.day?.board) {
       Object.assign(S, { board: normalize(r.day.board), version: r.day.version, isNew: false, banner: '' });
+      const synced = syncEquipment(S.board, r.day.board.eqSyncAt || r.day.created, date);
+      if (synced.length) {
+        S.banner = `<b>Updated from the equipment app:</b> ${[...new Set(synced)].map(esc).join(', ')}.`;
+        S.dirty = true;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveNow, 600);
+      }
     } else {
       const built = buildNewDay(date);
       Object.assign(S, { board: normalize(built.board), version: r.day?.version || 0, isNew: true, banner: built.msg });

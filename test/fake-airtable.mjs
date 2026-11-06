@@ -114,6 +114,14 @@ export const MOVE_RECORDS = [
   { id: 'recMOV0000000001', fields: { [M.equipment]: '938-09', [M.date]: '2026-11-10', [M.from]: 'HB Shop', [M.to]: 'Sadsbury', [M.status]: { name: 'Scheduled' }, [M.driver]: 'Reed', [M.truck]: '01-08' } },
   { id: 'recMOV0000000002', fields: { [M.equipment]: '730-06', [M.date]: '2026-11-09', [M.from]: 'Southern berks', [M.to]: 'Sadsbury', [M.status]: { name: 'Complete' } } },
 ];
+const CH = SC.changes.f;
+const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
+// The equipment app's Change Log: two location changes (one to a job, one to the shop) and one other kind of change.
+export const CHANGE_RECORDS = [
+  { id: 'recCHG0000000002', fields: { [CH.equipment]: '349-03', [CH.when]: hoursAgo(1), [CH.change]: 'Location', [CH.to]: 'HB Shop' } },
+  { id: 'recCHG0000000001', fields: { [CH.equipment]: 'CS54-01', [CH.when]: hoursAgo(2), [CH.change]: 'Location', [CH.to]: 'Sadsbury' } },
+  { id: 'recCHG0000000003', fields: { [CH.equipment]: '938-09', [CH.when]: hoursAgo(1), [CH.change]: 'Move (Scheduled)', [CH.to]: 'Sadsbury' } },
+];
 const T = SC.timeOff.f;
 export const TIMEOFF_RECORDS = [
   { id: 'recOFF0000000001', fields: { [T.employee]: 'recEMP0000000022', [T.from]: '2026-11-10', [T.to]: '2026-11-11', [T.hours]: 8, [T.status]: { name: 'Approved' } } },
@@ -167,7 +175,7 @@ export function fakeFetch({ fail = false } = {}) {
       if (method === 'POST') {
         const b = JSON.parse(opts.body);
         const id = `recDAY${String(nextId++).padStart(11, '0')}`;
-        days.set(id, { id, fields: { ...b.fields } });
+        days.set(id, { id, createdTime: new Date().toISOString(), fields: { ...b.fields } });
         return json(days.get(id));
       }
       if (method === 'PATCH') {
@@ -210,6 +218,7 @@ export function fakeFetch({ fail = false } = {}) {
       : base === J.base && table === J.table ? JOB_RECORDS
       : base === SC.equipment.base && table === SC.equipment.table ? EQUIPMENT_RECORDS
       : base === SC.timeOff.base && table === SC.timeOff.table ? TIMEOFF_RECORDS
+      : base === SC.changes.base && table === SC.changes.table ? CHANGE_RECORDS
       : base === SC.haulers.base && table === SC.haulers.table ? HAULER_RECORDS : null;
     if (!records) return new Response('{}', { status: 404 });
     // two pages to exercise paging

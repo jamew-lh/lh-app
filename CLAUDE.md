@@ -30,7 +30,7 @@ Decisions James made (keep them unless he changes them):
 | People | **Include on Schedule** checkbox; display **Schedule Name**. Rushane Davis-Morgan is intentionally off. |
 | Vacations | Timecard app → Scheduled Time Off. Approved/blank = off (removed on copy-forward); Requested = heads-up only; Denied = ignored; Hours per Day < 8 = part day. |
 | Hired trucks | Vendors → Hired Trucks (quarries included). Count, type, material, from/to, time, note per job. **No texts to haulers.** |
-| Equipment moves | Read from the equipment app's Moves table and applied when a day is created. The board does **not** write Moves (not asked for yet). |
+| Equipment moves | The equipment app is the source of truth for where machines are. Its Change Log "Location" entries are applied to **today and later** days when they open (`board.eqSyncAt` remembers the last one applied; past days are left alone). That day's Moves table entries are applied when a day is created. The board does **not** write Moves (not asked for yet). |
 | Material / other moves | Saved with the day only. No table, no tracking — James said there's no benefit. |
 | Crew texts | Flag anyone whose spot, note or job note changed since the last saved day. Send via TextMagic contact (TextMagic Contact ID), fall back to Cell Phone. |
 | Email | Copy-and-paste into Outlook. **No Microsoft 365 connection.** |
