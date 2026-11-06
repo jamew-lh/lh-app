@@ -131,6 +131,9 @@ test('crew texts go to the TextMagic contact (or the cell), and mark people as s
   ] } });
   assert.equal(r.status, 200, JSON.stringify(r.data));
   assert.deepEqual(f.texts.map((t) => t.contacts || t.phones), ['5550002', '16105550109']);
+  // crew texts ignore Schedule Link Phone (only the published link uses it)
+  await call('POST', `/api/schedule/texts?date=${D}`, { cookie, body: { messages: [{ id: 'recEMP0000000003', text: 'x', key: 'k3' }] } });
+  assert.equal(f.texts.at(-1).contacts, '5550003');
   assert.equal(r.data.day.board.sent.recEMP0000000002.key, 'k1');
   assert.equal(r.data.day.version, 2);
 });
@@ -146,6 +149,8 @@ test('publish: a no-sign-in link that lasts 4 days, keeps its link when re-publi
   assert.ok(days > 3.99 && days <= 4, `expires in ${days} days`);
   assert.equal(p.data.texted.sent.length, 3);                          // everyone with Daily Schedule checked
   assert.ok(f.texts.every((t) => t.text.includes(token)));
+  assert.ok(f.texts.some((t) => t.phones === '14845550999' && !t.contacts), 'Sam B.: link goes to his Schedule Link Phone, not his TextMagic contact');
+  assert.ok(!f.texts.some((t) => t.contacts === '5550003'));
   const again = await call('POST', `/api/schedule/publish?date=${D}`, { cookie, body: {} });
   assert.equal(again.data.day.token, token);
   assert.equal(again.data.day.expires, p.data.day.expires);

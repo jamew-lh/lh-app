@@ -52,7 +52,7 @@ Decisions James made (keep them unless he changes them):
 | Material / other moves | Saved with the day only. No table, no tracking — James said there's no benefit. |
 | Crew texts | Flag anyone whose spot, note or job note changed since the last saved day. Send via TextMagic contact (TextMagic Contact ID), fall back to Cell Phone. |
 | Email | Copy-and-paste into Outlook. **No Microsoft 365 connection.** |
-| Shared link | No sign-in, **expires 4 days after the first publish**; re-publish keeps the link. Texted to employees with **Daily Schedule** checked. No phone numbers on it. |
+| Shared link | No sign-in, **expires 4 days after the first publish**; re-publish keeps the link. Texted to employees with **Daily Schedule** checked — to **Schedule Link Phone** when filled in (link texts only), else TextMagic contact / Cell Phone. No phone numbers on it. |
 | Look | LH App colors/fonts; full-width board; top bar links to the other apps. In job cards: Crew, then Hired trucks, then Equipment. |
 | Landscaping Crew | Permanent crew (`LANDSCAPE`), top of the right side. Works like a job (crew, machines, note, texts) but has no Job Name List record. |
 | Clicking a name | Editor has "Where … works" to move them anywhere, including a job not on the day yet (adds it). |

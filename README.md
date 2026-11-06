@@ -154,7 +154,9 @@ it also works on a tablet.
   (TextMagic Contact ID, filled by the timecard app) or their Cell Phone.
 - **Publish:** *Copy for email* (paste into Outlook), *Print / PDF*, and a **no-sign-in link**
   (`/day.html?k=…`) that works for 4 days after the first publish (`SCHEDULE.shareDays`).
-  *Text link* sends it to everyone with **Daily Schedule** checked in the Employee List.
+  *Text link* sends it to everyone with **Daily Schedule** checked in the Employee List — to their
+  **Schedule Link Phone** if one is filled in, otherwise their TextMagic contact (or Cell Phone).
+  Crew job-change texts always use the TextMagic contact / Cell Phone.
   Re-publishing keeps the same link. *Turn off link* (or clearing Share Token in Airtable) stops it.
   The shared page has names, jobs and equipment only — no phone numbers.
 

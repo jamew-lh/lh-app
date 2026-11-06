@@ -34,7 +34,7 @@ const crew = (rec, short, more = {}) => {
   Object.assign(r.fields, { [P.include]: true, [P.scheduleName]: short, ...more });
 };
 crew('recEMP0000000002', 'Tony R.', { [P.textMagicId]: '5550002' });
-crew('recEMP0000000003', 'Sam B.', { [P.getsLink]: true, [P.textMagicId]: '5550003' });
+crew('recEMP0000000003', 'Sam B.', { [P.getsLink]: true, [P.textMagicId]: '5550003', [P.linkPhone]: '(484) 555-0999' });
 crew('recEMP0000000009', 'Gage S.');
 crew('recEMP0000000010', 'Chad S.');
 crew('recEMP0000000006', 'Lee C.', { [P.include]: false, [P.getsLink]: true });
