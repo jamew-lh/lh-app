@@ -6,9 +6,26 @@ The README explains what the app does and how it's set up. These notes are for w
 
 - James is not a developer. Explain in plain words, keep answers short, and say what changed and what is left.
 - **`main` is live.** Netlify deploys `main` to lyonshohl.netlify.app and crews use it every day.
-  Do new work on a branch; Netlify gives each branch a preview address for testing. Merge only when James says so.
-- James pushes with **GitHub Desktop** (Fetch origin before work, Push origin after). Commit locally; don't expect a GitHub login on the command line.
-- Node.js may not be installed on James's Mac. Ask before downloading it.
+  Never commit straight to `main`.
+
+### Publishing a change (Claude does it; James only says "go live")
+
+1. `git fetch` and start a new branch from `origin/main` (James may also edit through other Claude chats or GitHub).
+2. Make the change, run `npm test`, and try it in the local preview.
+3. Commit, push the branch, open a pull request (`gh pr create`), and give James the Netlify Deploy Preview link
+   (`https://deploy-preview-<PR number>--lyonshohl.netlify.app`). It uses real Airtable data and real TextMagic,
+   so warn him that texts sent from the preview really go out.
+4. **Merge only when James says "go live"** (`gh pr merge <n> --merge --delete-branch`), after the Netlify check is green.
+
+Tools on James's Mac (Apple silicon, no Homebrew):
+- **GitHub CLI (`gh`)** is signed in as `jamew-lh` (token in the macOS keychain, done Nov 6 2026), but the `gh` program
+  itself is not installed. Download the official macOS arm64 zip from github.com/cli/cli/releases into the session's
+  temporary folder, check it against the release's checksums file, and run it from there. No new sign-in needed.
+- Don't change git's global settings (GitHub Desktop shares them). Push with a one-off credential helper:
+  `git -c credential.helper= -c credential.helper="!<path to gh> auth git-credential" push -u origin <branch>`
+- **Node.js** isn't installed either. With James's OK, download the official LTS from nodejs.org into the temporary
+  folder (check SHASUMS256) and use it from there; `npm ci --ignore-scripts` installs the one dependency.
+- James can still use **GitHub Desktop** himself (Fetch origin before work, Push origin after).
 - Checks: `npm test` (fake Airtable, no network). Local preview: `npm run dev` → http://localhost:8899
   (`Walker`/`1234` office, `Rivera`/`4321` operator, `Woodard`/`6060` schedule editor; all made-up data).
 - Airtable IDs (not names) live in `lib/config.mjs`. Secrets (Airtable token, TextMagic keys, session secret) live only in Netlify.
