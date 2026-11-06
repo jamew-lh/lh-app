@@ -62,6 +62,8 @@ test('setup: people with schedule names and no phone numbers, equipment placed a
   assert.equal(eq['730-06'].job, 'recJOB0000000011');        // "Southern berks" → Southern Berks
   assert.equal(eq['938-09'].job, '');                        // HB Shop → Yard
   assert.equal(eq['323-01'].down, true);
+  assert.equal(eq['938-09'].tracked, true);
+  assert.equal(eq['Old Plate'].tracked, false);
   assert.ok(!eq['Old Dozer'], 'sold equipment left out');
   assert.deepEqual(r.data.haulers.map((h) => h.name), ['Leary', 'Quarry - Martin Stone', 'Risbon']);
   assert.equal(r.data.linkPeople, 3);
@@ -175,6 +177,8 @@ test('change log wording', () => {
   const b = { jobs: ['j1', 'j2'], people: { j2: [{ id: 'p1' }] }, equip: {}, jobNotes: { j2: 'Start 6:30' } };
   assert.deepEqual(describeChanges(a, b, names), ['Tom C.: Valley Creek → TOA III', 'D5-01: Valley Creek → Yard', 'Job note for TOA III: "Start 6:30"']);
   assert.deepEqual(describeChanges(b, { ...b, equip: { j2: ['e1'] } }, names), ['D5-01: Yard → TOA III']);
+  const land = { ...b, people: { LANDSCAPE: [{ id: 'p1' }] }, jobNotes: { j2: 'Start 6:30', LANDSCAPE: 'Mulch at Gray Farm' } };
+  assert.deepEqual(describeChanges(b, land, names), ['Tom C.: TOA III → Landscaping Crew', 'Job note for Landscaping Crew: "Mulch at Gray Farm"']);
   assert.deepEqual(describeChanges(null, b, names), ['Started this day.']);
 });
 

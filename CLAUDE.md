@@ -35,12 +35,14 @@ Decisions James made (keep them unless he changes them):
 | Crew texts | Flag anyone whose spot, note or job note changed since the last saved day. Send via TextMagic contact (TextMagic Contact ID), fall back to Cell Phone. |
 | Email | Copy-and-paste into Outlook. **No Microsoft 365 connection.** |
 | Shared link | No sign-in, **expires 4 days after the first publish**; re-publish keeps the link. Texted to employees with **Daily Schedule** checked. No phone numbers on it. |
-| Look | LH App colors/fonts; full-width board; top bar links to the other apps. |
+| Look | LH App colors/fonts; full-width board; top bar links to the other apps. In job cards: Crew, then Hired trucks, then Equipment. |
+| Landscaping Crew | Permanent crew (`LANDSCAPE`), top of the right side. Works like a job (crew, machines, note, texts) but has no Job Name List record. |
+| Clicking a name | Editor has "Where … works" to move them anywhere, including a job not on the day yet (adds it). |
 | Back burner | Comparing the schedule with timecard entries. Don't build unless asked. |
 
 Board model (one JSON per day in Daily Schedules → Schedule Days, `Version` stops two editors overwriting each other):
-`jobs`, `people {loc: [{id, role, machine, note}]}` (loc = job record ID | OFF | SHOP | DRIVERS),
-`equip {loc: [equipment record ID]}` (not listed = Yard; REPAIR), `jobNotes`, `haul`, `moves`, `sent`.
+`jobs`, `people {loc: [{id, role, machine, note}]}` (loc = job record ID | LANDSCAPE | OFF | SHOP | DRIVERS),
+`equip {loc: [equipment record ID]}` (not listed = Yard; LANDSCAPE; REPAIR), `jobNotes`, `haul`, `moves`, `sent`.
 An operator's machine stays in the job's `equip` list; the person only points to it.
 
 Drag and drop uses pointer events (works on touch), not HTML5 drag-and-drop.

@@ -6,7 +6,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const GREEN = '#004745';
 const TAN = '#D4A070';
 
-const SPECIAL = { OFF: 'Off', SHOP: 'Office / Shop', DRIVERS: 'Drivers / Moves' };
+const SPECIAL = { LANDSCAPE: 'Landscaping Crew', OFF: 'Off', SHOP: 'Office / Shop', DRIVERS: 'Drivers / Moves' };
 
 export function longDate(iso) {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
@@ -50,20 +50,20 @@ export function dayHtml(d, mode = 'page') {
   const para = (t) => `<div ${s('v-line', 'font-size:14px;margin:2px 0')}>${t}</div>`;
 
   const blocks = [];
-  for (const jid of b.jobs || []) {
-    const j = d.jobs[jid] || { name: 'Job' };
+  for (const jid of [...(b.jobs || []), 'LANDSCAPE']) {
+    const j = jid === 'LANDSCAPE' ? { name: SPECIAL.LANDSCAPE } : d.jobs[jid] || { name: 'Job' };
     const crew = b.people?.[jid] || [];
     const operated = new Set(crew.map((a) => a.machine).filter(Boolean));
     const eq = (b.equip?.[jid] || []).filter((e) => !operated.has(e)).map(Q);
     const haul = (b.haul?.[jid] || []).map((h) => para(esc(haulText(h, d.haulers[h.hauler]?.name))));
-    if (!crew.length && !haul.length && mode !== 'page') continue;     // parked equipment only: leave off the email/print
+    if (!crew.length && !haul.length && (mode !== 'page' || jid === 'LANDSCAPE')) continue;     // parked equipment only: leave off the email/print
     const sub = [j.number && /^\d/.test(j.number) ? j.number : '', j.supervisor && `Sup: ${esc(j.supervisor)}`,
       j.address && `<a href="${mapLink(j.address)}" ${s('v-map', `color:${GREEN}`)}>${esc(j.address)}</a>`].filter(Boolean).join(' · ');
     const note = b.jobNotes?.[jid] ? `<div ${s('v-jobnote', 'background:#FEF3C7;color:#92400E;border-radius:6px;padding:4px 8px;margin:6px 0;font-size:14px')}>${esc(b.jobNotes[jid])}</div>` : '';
     blocks.push(block(esc(j.name), sub, note
       + list('Crew', table(crew.map(crewRow).join('')))
-      + list('Equipment', eq.length ? para(esc(eq.join(', '))) : '')
-      + list('Hired trucks', haul.join(''))));
+      + list('Hired trucks', haul.join(''))
+      + list('Equipment', eq.length ? para(esc(eq.join(', '))) : '')));
   }
   for (const loc of ['OFF', 'SHOP', 'DRIVERS']) {
     const crew = b.people?.[loc] || [];
@@ -89,10 +89,10 @@ export function dayText(d) {
   const P = (id) => d.people[id]?.name || 'Unknown';
   const lines = [`L&H Daily Schedule — ${longDate(d.date)}`, ''];
   const crew = (list) => (list || []).map((a) => `  ${P(a.id)}${a.role && a.role !== 'Operator' ? ` (${a.role})` : ''}${a.machine ? ` ${d.equipment[a.machine]?.label || ''}` : ''}${a.note ? ` — ${a.note}` : ''}`);
-  for (const jid of b.jobs || []) {
+  for (const jid of [...(b.jobs || []), 'LANDSCAPE']) {
     const c = b.people?.[jid] || [];
     if (!c.length && !(b.haul?.[jid] || []).length) continue;
-    const j = d.jobs[jid] || { name: 'Job' };
+    const j = jid === 'LANDSCAPE' ? { name: SPECIAL.LANDSCAPE } : d.jobs[jid] || { name: 'Job' };
     lines.push(`${j.name}${j.number ? ` (${j.number})` : ''}`);
     if (b.jobNotes?.[jid]) lines.push(`  NOTE: ${b.jobNotes[jid]}`);
     lines.push(...crew(c));

@@ -1,8 +1,8 @@
 // Daily Schedule: the drag-and-drop crew board (editors only).
 // The board for a day is saved as one JSON document (Daily Schedules base → Schedule Days):
 //   jobs: [jobId]                                order of job cards
-//   people: { loc: [{ id, role, machine, note }] }   loc = jobId | OFF | SHOP | DRIVERS
-//   equip: { loc: [equipmentId] }                 loc = jobId | REPAIR (not listed = Yard)
+//   people: { loc: [{ id, role, machine, note }] }   loc = jobId | LANDSCAPE | OFF | SHOP | DRIVERS
+//   equip: { loc: [equipmentId] }                 loc = jobId | LANDSCAPE | REPAIR (not listed = Yard)
 //   jobNotes: { jobId: text }
 //   haul: { jobId: [{ id, hauler, trucks, kind, material, from, to, time, note }] }
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
@@ -14,7 +14,7 @@ let C;
 export function initSchedule(ctx) { C = ctx; }
 
 const ROLES = ['Foreman', 'Operator', 'Laborer'];
-const SPECIAL = { OFF: 'Off', SHOP: 'Office / Shop', DRIVERS: 'Drivers / Moves' };
+const SPECIAL = { LANDSCAPE: 'Landscaping Crew', OFF: 'Off', SHOP: 'Office / Shop', DRIVERS: 'Drivers / Moves' };
 const TRUCK_KINDS = ['Tri-axle', 'Quad', 'Tandem', 'Tractor-trailer', 'Lowboy', 'Other'];
 const QUICK_NOTES = ['Start 6:30', 'Report to shop first', 'Bring trailer', 'Rain day – stand by'];
 const TZ = 'America/New_York';
@@ -53,14 +53,15 @@ function indexSetup(setup) {
     byLabel: Object.fromEntries(setup.equipment.map((e) => [e.label.toLowerCase(), e])),
   };
 }
-const emptyBoard = () => ({ jobs: [], people: { OFF: [], SHOP: [], DRIVERS: [] }, equip: { REPAIR: [] }, jobNotes: {}, haul: {}, moves: [], sent: {} });
+const emptyBoard = () => ({ jobs: [], people: { LANDSCAPE: [], OFF: [], SHOP: [], DRIVERS: [] }, equip: { LANDSCAPE: [], REPAIR: [] }, jobNotes: {}, haul: {}, moves: [], sent: {} });
 function normalize(b) {
   const out = { ...emptyBoard(), ...(b || {}) };
   for (const k of ['people', 'equip', 'jobNotes', 'haul', 'sent']) out[k] = { ...(emptyBoard()[k] || {}), ...(out[k] || {}) };
   for (const j of out.jobs) { out.people[j] = out.people[j] || []; out.equip[j] = out.equip[j] || []; }
   return out;
 }
-const isJob = (loc) => !!S.jobs[loc] || (S.board.jobs || []).includes(loc);
+// A place crews work: a job on the board, or the Landscaping Crew (always there, in the right-hand panels).
+const isJob = (loc) => loc === 'LANDSCAPE' || !!S.jobs[loc] || (S.board.jobs || []).includes(loc);
 const locName = (loc) => SPECIAL[loc] || (loc === 'REPAIR' ? 'Repair' : loc === 'YARD' ? 'Yard' : S.jobs[loc]?.name || 'Unknown job');
 const personName = (id) => S.people[id]?.name || 'Former employee';
 const eqLabel = (id) => S.equip[id]?.label || '?';
@@ -337,7 +338,7 @@ function jobWarnings(jid) {
     if (v) w.push({ red: !v.half, t: `${personName(a.id)} is on vacation${v.half ? ' part of the day' : ''}` });
     else if (requestedOn(a.id)) w.push({ t: `${personName(a.id)} asked for this day off (not approved yet)` });
   }
-  if (crew.length >= 4 && !crew.some((a) => a.role === 'Foreman')) w.push({ t: 'No foreman' });
+  if (jid !== 'LANDSCAPE' && crew.length >= 4 && !crew.some((a) => a.role === 'Foreman')) w.push({ t: 'No foreman' });
   for (const eid of S.board.equip[jid] || []) {
     const e = S.equip[eid];
     if (!e) continue;
@@ -366,10 +367,10 @@ function jobCard(jid) {
     </div>
     <div class="sd-zl">Crew</div>
     <div class="sd-zone" data-zone="people:${jid}">${crew.map((a) => personChip(a, jid)).join('') || '<div class="sd-empty">Drag people here</div>'}</div>
-    <div class="sd-zl">Equipment</div>
-    <div class="sd-zone eq" data-zone="equip:${jid}">${eqs.map((e) => eqChip(e, jid)).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>
     <div class="sd-zl">Hired trucks</div>
     <div class="sd-zone haul" data-zone="haul:${jid}">${haul.map((h) => `<button class="sd-haul" data-haul="${jid}|${h.id}">${esc(haulText(h, S.haulers[h.hauler]?.name))}</button>`).join('') || '<div class="sd-empty">Drag a hauler here</div>'}</div>
+    <div class="sd-zl">Equipment</div>
+    <div class="sd-zone eq" data-zone="equip:${jid}">${eqs.map((e) => eqChip(e, jid)).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>
   </div>`;
 }
 
@@ -383,11 +384,11 @@ function personChip(a, loc) {
   else if (st?.kind === 'sent') tag = '<span class="tag sent">sent ✓</span>';
   else if (st?.kind === 'same') tag = '<span class="tag same">same</span>';
   const mach = a.machine ? `<span class="mach">${esc(eqLabel(a.machine))}</span>`
-    : (a.role === 'Operator' && isJob(loc) ? '<span class="mach pick">pick machine</span>' : '');
+    : (a.role === 'Operator' && isJob(loc) ? '<span class="mach sd-pickm">pick machine</span>' : '');
   const role = a.role && a.role !== 'Operator' ? `<span class="role">${esc(a.role)}</span>` : '';
   return `<div class="sd-chip r-${esc(a.role || 'x')} ${v && !v.half ? 'flag' : ''}" data-drag data-pid="${a.id}" data-loc="${loc}"
     title="${esc(p.full || p.name)} · ${esc(p.position)}${p.cdl?.length ? ` · ${esc(p.cdl.join(', '))}` : ''} — click to edit">
-    <span class="nm">${esc(p.name)}</span>${role}${mach}${a.note ? `<span class="note">${esc(a.note)}</span>` : ''}${tag}</div>`;
+    <span class="nm">${esc(p.name)}</span>${role}${mach}${a.note ? `<span class="sd-pnote">${esc(a.note)}</span>` : ''}${tag}</div>`;
 }
 function poolChip(p) {
   const r = ROLES.includes(p.position) ? p.position : 'x';
@@ -430,6 +431,17 @@ function sidebar() {
 
   const zone = (loc) => `<div class="sd-zone" data-zone="people:${loc}">${(b.people[loc] || []).map((a) => personChip(a, loc)).join('') || '<div class="sd-empty">Drag people here</div>'}</div>`;
 
+  const landCrew = b.people.LANDSCAPE || [];
+  const landRun = new Set(landCrew.map((a) => a.machine).filter(Boolean));
+  const landEq = (b.equip.LANDSCAPE || []).filter((e) => !landRun.has(e) && S.equip[e]);
+  const landWarn = jobWarnings('LANDSCAPE');
+  const landBody = `<div class="sd-landhead"><span class="sd-muted">${landCrew.length} crew · ${(b.equip.LANDSCAPE || []).length} equip</span><button class="sd-link" data-jobnote="LANDSCAPE">${b.jobNotes.LANDSCAPE ? 'Edit note' : '+ Note'}</button></div>
+    ${b.jobNotes.LANDSCAPE ? `<div class="sd-jobnote">${esc(b.jobNotes.LANDSCAPE)}</div>` : ''}
+    ${landWarn.length ? `<div class="sd-warns">${landWarn.map((w) => `<div class="sd-warn ${w.red ? 'red' : ''}">${esc(w.t)}</div>`).join('')}</div>` : ''}
+    <div class="sd-sub">Crew</div>${zone('LANDSCAPE')}
+    <div class="sd-sub">Equipment</div>
+    <div class="sd-zone eq" data-zone="equip:LANDSCAPE">${landEq.map((e) => eqChip(e, 'LANDSCAPE')).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>`;
+
   // equipment moves: from the equipment app, and changes on this board since the last saved day
   const appMoves = S.moves.map((m) => `<div class="sd-row move"><span><b>${esc(m.equipment)}</b> ${esc(m.from)} → ${esc(m.to)}</span><span class="d">${esc([m.driver, m.status].filter(Boolean).join(' · '))}</span></div>`).join('');
   const inApp = new Set(S.moves.map((m) => m.equipment.toLowerCase()));
@@ -451,7 +463,8 @@ function sidebar() {
   const repairBody = `<div class="sd-zone eq" data-zone="equip:REPAIR">${[...(b.equip.REPAIR || []), ...downIds].map((e) => eqChip(e, 'REPAIR')).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>`;
 
   const placedEq = new Set(Object.values(b.equip).flat());
-  const inYard = S.setup.equipment.filter((e) => !placedEq.has(e.id) && !e.down);
+  // Only machines with TRACKING checked in the equipment table (the ones the equipment app follows).
+  const inYard = S.setup.equipment.filter((e) => e.tracked && !placedEq.has(e.id) && !e.down);
   const types = [...new Set(inYard.map((e) => e.type).filter(Boolean))].sort();
   const shown = inYard.filter((e) => (!yard.type || e.type === yard.type) && (!yard.q || e.label.toLowerCase().includes(yard.q.toLowerCase())));
   const yardBody = `<div class="sd-yardtools"><input id="sdYardQ" placeholder="Filter yard…" value="${esc(yard.q)}">
@@ -464,6 +477,7 @@ function sidebar() {
     <div class="sd-zone eq">${S.setup.haulers.map((h) => `<span class="sd-hauler" data-drag data-hid="${h.id}">${esc(h.name)}${totals[h.id] ? ` <b>${totals[h.id]}</b>` : ''}</span>`).join('') || '<div class="sd-empty">Add haulers in Airtable: Vendors → Hired Trucks</div>'}</div>`;
 
   return [
+    panel('p-land', 'Landscaping Crew', landCrew.length, 'every day', landBody),
     panel('p-vac', 'Vacation', today.length, 'timecard app', vacBody),
     panel('p-pool', 'Not scheduled', pool.length, 'drag onto a job', poolBody),
     panel('p-off', 'Off', (b.people.OFF || []).length, '', zone('OFF')),
@@ -552,7 +566,7 @@ function wire() {
   $('#sdAddJob').addEventListener('change', (e) => {
     const id = e.target.value;
     if (!id) return;
-    S.board.jobs.push(id); S.board.people[id] = S.board.people[id] || []; S.board.equip[id] = S.board.equip[id] || [];
+    addJob(id);
     changed();
   });
   $('#sdBannerX')?.addEventListener('click', () => { S.banner = ''; render(); });
@@ -681,6 +695,7 @@ function editPerson(pid) {
   const machines = (S.board.equip[hit.loc] || []).map((e) => S.equip[e]).filter(Boolean);
   const back = modal(`<h3>${esc(p.name)} <span class="sd-muted">${esc(p.full)}</span></h3>
     <p class="sd-muted">${esc(locName(hit.loc))} · ${esc(p.position || '—')}${p.cdl?.length ? ` · ${esc(p.cdl.join(', '))}` : ''}</p>
+    <label class="sd-field">Where ${esc(p.name)} works<select id="eWhere">${whereOptions(hit.loc)}</select></label>
     <label class="sd-field">Role today<select id="eRole"><option value="">—</option>${ROLES.map((r) => `<option ${r === a.role ? 'selected' : ''}>${r}</option>`).join('')}</select></label>
     ${isJob(hit.loc) ? `<label class="sd-field">Machine (equipment at this job)<select id="eMach"><option value="">—</option>${machines.map((e) => `<option value="${e.id}" ${e.id === a.machine ? 'selected' : ''}>${esc(e.label)}${e.type ? ` · ${esc(e.type)}` : ''}</option>`).join('')}</select></label>` : ''}
     <label class="sd-field">Note for ${esc(p.name)} (goes in their text and on the sheet)<input id="eNote" value="${esc(a.note || '')}" maxlength="200" placeholder="e.g. pick up the laser at the shop first"></label>
@@ -692,15 +707,34 @@ function editPerson(pid) {
     a.role = $('#eRole', back).value;
     if ($('#eMach', back)) a.machine = $('#eMach', back).value;
     a.note = $('#eNote', back).value.trim();
-    closeModal(); changed();
+    const where = $('#eWhere', back).value;
+    closeModal();
+    if (where === hit.loc) { changed(); return; }
+    if (where.startsWith('add:')) addJob(where.slice(4));
+    movePerson(pid, where.replace(/^add:/, ''));
   });
   $('#eOff', back).addEventListener('click', () => { closeModal(); movePerson(pid, 'OFF'); });
   $('#eRm', back).addEventListener('click', () => { closeModal(); movePerson(pid, 'POOL'); });
   $('#eNote', back).focus();
 }
 
+function whereOptions(current) {
+  const b = S.board;
+  const opt = (v, t) => `<option value="${esc(v)}" ${v === current ? 'selected' : ''}>${esc(t)}</option>`;
+  const onBoard = b.jobs.map((j) => opt(j, `${S.jobs[j]?.name || 'Job'}${S.jobs[j]?.number ? ` — ${S.jobs[j].number}` : ''}`)).join('');
+  const others = Object.values(S.jobs).filter((j) => j.active && !b.jobs.includes(j.id)).sort((x, y) => x.name.localeCompare(y.name))
+    .map((j) => opt(`add:${j.id}`, `${j.name}${j.number ? ` — ${j.number}` : ''}`)).join('');
+  return `<optgroup label="Jobs on this day">${onBoard}</optgroup>
+    <optgroup label="Crews and other">${opt('LANDSCAPE', 'Landscaping Crew')}${opt('OFF', 'Off')}${opt('SHOP', 'Office / Shop')}${opt('DRIVERS', 'Drivers / Moves')}${opt('POOL', 'Not scheduled')}</optgroup>
+    ${others ? `<optgroup label="Add another job to this day">${others}</optgroup>` : ''}`;
+}
+function addJob(id) {
+  if (!S.board.jobs.includes(id)) S.board.jobs.push(id);
+  S.board.people[id] = S.board.people[id] || [];
+  S.board.equip[id] = S.board.equip[id] || [];
+}
 function editJobNote(jid) {
-  const back = modal(`<h3>Note for ${esc(S.jobs[jid]?.name || 'this job')}</h3>
+  const back = modal(`<h3>Note for ${esc(locName(jid))}</h3>
     <p class="sd-muted">Goes on the text of everyone at this job and on the printed / emailed schedule.</p>
     <label class="sd-field">Note<textarea id="jNote" maxlength="300" rows="3">${esc(S.board.jobNotes[jid] || '')}</textarea></label>
     ${quick('jNote')}
@@ -779,6 +813,12 @@ function draftText(t) {
   if (t.loc === 'OFF') return `L&H: You are OFF ${when}.${note}`;
   if (t.loc === 'SHOP') return `L&H: ${when} report to the shop.${note}`;
   if (t.loc === 'DRIVERS') return `L&H: ${when} you're driving.${note} Check the equipment app for moves.`;
+  if (t.loc === 'LANDSCAPE') {
+    const lf = a.role === 'Foreman' ? ' You are running the crew.' : (foremanAt(t.loc, t.pid) ? ` Foreman: ${foremanAt(t.loc, t.pid)}.` : '');
+    const lr = a.machine && S.equip[a.machine] ? ` You're on ${S.equip[a.machine].label}.` : '';
+    const ln = S.board.jobNotes.LANDSCAPE ? ` ${S.board.jobNotes.LANDSCAPE.replace(/\.?$/, '.')}` : '';
+    return `L&H: ${when} you're on the Landscaping Crew.${lf}${lr}${ln}${note}`;
+  }
   const j = S.jobs[t.loc] || { name: 'the job' };
   const num = j.number && /^\d/.test(j.number) ? ` (${j.number})` : '';
   const where = j.address ? ` ${j.address}. Map: ${mapLink(j.address)}` : '';
