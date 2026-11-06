@@ -160,6 +160,9 @@ body.sd-dragging, body.sd-dragging * { cursor: grabbing !important; }
 .v-head { margin: 16px 0 12px; border-bottom: 4px solid var(--tan); padding-bottom: 8px; }
 .v-head h2 { margin: 2px 0 0; font-family: 'Barlow Condensed', sans-serif; font-size: 30px; color: var(--green); }
 .v-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; align-items: start; }
+/* Stacked columns (stackCards in schedule-view.js): no empty space under short cards */
+.sd-board.stacked, .v-grid.stacked { display: flex; gap: 12px; align-items: flex-start; }
+.mcol { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
 .v-block { background: #fff; border: 1px solid var(--line); border-top: 4px solid var(--green); border-radius: 10px; padding: 10px 12px; break-inside: avoid; }
 .v-block h3 { margin: 0; font-size: 17px; color: var(--green); }
 .v-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
@@ -181,8 +184,9 @@ body.shared-day .wrap { max-width: 1100px; }
   body.sched-on .sd-print { display: block; }
   body.shared-day .bar { display: none; }
   body { background: #fff; font-size: 12px; }
-  .v-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
-  .v-block { padding: 6px 8px; }
+  .v-grid, .v-grid.stacked { display: block; columns: 3; column-gap: 6px; }
+  .v-grid .mcol { display: contents; }
+  .v-block { padding: 6px 8px; margin: 0 0 6px; }
   .v-table, .v-line { font-size: 12px; }
   .v-head { margin-top: 0; }
 }

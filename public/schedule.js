@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver } from './schedule-view.js';
+import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -215,6 +215,11 @@ async function saveNow() {
 }
 /** Called before leaving the screen or changing days. */
 export async function flushSchedule() { if (S) await saveNow(); }
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (document.body.classList.contains('sched-on')) stackCards($('.sd-board'), 260, 12); }, 150);
+});
 window.addEventListener('beforeunload', (e) => { if (S?.dirty) { e.preventDefault(); e.returnValue = ''; } });
 
 function onConflict(day) {
@@ -328,6 +333,7 @@ function render(first = false) {
     <aside class="sd-side">${sidebar()}</aside>
   </div>
   <div id="sdPrint" class="sd-print"></div>`;
+  stackCards($('.sd-board'), 260, 12);
   wire();
   applySearch(false);
   if (!first) { window.scrollTo(0, keep.y); const s = $('.sd-side'); if (s) s.scrollTop = keep.side; }
