@@ -111,6 +111,29 @@ export function dayHtml(d, mode = 'page') {
     : `<div class="v-day">${head}<div class="v-grid">${body}</div></div>`;
 }
 
+/**
+ * Stacked columns: each card goes into the shortest column, so short cards don't leave
+ * empty space under them (a plain grid makes every card in a row as tall as the tallest).
+ * Order still runs left to right. Safe to call again (e.g. after the window is resized).
+ */
+export function stackCards(box, minWidth = 260, gap = 12) {
+  if (!box) return;
+  const loose = [...box.children].filter((c) => !c.classList.contains('mcol'));
+  const placed = [...box.querySelectorAll(':scope > .mcol > *')];
+  const cards = [...loose, ...placed];
+  cards.forEach((c, i) => { if (c.dataset.mi === undefined) c.dataset.mi = String(i); });
+  cards.sort((a, b) => Number(a.dataset.mi) - Number(b.dataset.mi));
+  box.classList.add('stacked');
+  const n = Math.max(1, Math.floor((box.clientWidth + gap) / (minWidth + gap)));
+  const cols = Array.from({ length: n }, () => { const d = document.createElement('div'); d.className = 'mcol'; return d; });
+  box.replaceChildren(...cols);
+  for (const c of cards) {
+    let best = cols[0];
+    for (const col of cols) if (col.offsetHeight < best.offsetHeight) best = col;
+    best.appendChild(c);
+  }
+}
+
 /** Plain text version (for the clipboard alongside the HTML). */
 export function dayText(d) {
   const b = d.board || {};

@@ -1,5 +1,5 @@
 // The no-sign-in schedule page: /day.html?k=<link code>. Works for 4 days after publishing.
-import { dayHtml } from './schedule-view.js';
+import { dayHtml, stackCards } from './schedule-view.js';
 
 const box = document.getElementById('day');
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -23,6 +23,10 @@ const byId = (list) => Object.fromEntries((list || []).map((x) => [x.id, x]));
     date: data.date, board: data.board, people: byId(data.people), jobs: byId(data.jobs),
     equipment: byId(data.equipment), haulers: byId(data.haulers), vacation: data.vacation, eqMoves: data.eqMoves,
   }, 'share') + `<p class="v-foot">${updated ? `Updated ${esc(updated)} · ` : ''}This link works until ${esc(until)}.</p>`;
+  const stack = () => stackCards(box.querySelector('.v-grid'), 280, 12);
+  stack();
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(stack, 150); });
   const p = document.getElementById('print');
   p.hidden = false;
   p.addEventListener('click', () => window.print());
