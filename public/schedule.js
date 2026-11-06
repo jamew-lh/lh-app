@@ -462,7 +462,8 @@ function sidebar() {
       if (now !== was && !inApp.has(e.label.toLowerCase())) boardMoves.push(`<div class="sd-row move"><span><b>${esc(e.label)}</b> ${esc(locName(was))} → ${esc(locName(now))}</span></div>`);
     }
   }
-  const other = (b.moves || []).map((m) => `<button class="sd-haul" data-move="${m.id}">${esc(otherMoveText(m))}</button>`).join('');
+  const om = b.moves || [];
+  const other = om.map((m, i) => `<div class="sd-mrow"><button class="sd-haul" data-move="${m.id}">${esc(otherMoveText(m))}</button>${om.length > 1 ? `<span class="sd-ord"><button class="sd-up" data-mup="${i}" title="Move up" aria-label="Move up"${i ? '' : ' disabled'}>▲</button><button class="sd-up" data-mdn="${i}" title="Move down" aria-label="Move down"${i < om.length - 1 ? '' : ' disabled'}>▼</button></span>` : ''}</div>`).join('');
   const movesBody = `${zone('DRIVERS')}
     <div class="sd-sub">Equipment moves (equipment app)</div>${appMoves || '<div class="sd-hint">None entered for this day.</div>'}
     ${boardMoves.length ? `<div class="sd-sub">Moved on this board, not in the equipment app</div>${boardMoves.join('')}<div class="sd-hint">Enter these in the equipment app so the drivers and the shop TV see them.</div>` : ''}
@@ -569,6 +570,10 @@ function wire() {
   $$('[data-jobnote]').forEach((el) => el.addEventListener('click', () => editJobNote(el.dataset.jobnote)));
   $$('[data-haul]').forEach((el) => el.addEventListener('click', () => { const [jid, id] = el.dataset.haul.split('|'); editHaul(jid, id); }));
   $$('[data-move]').forEach((el) => el.addEventListener('click', () => editOtherMove(el.dataset.move)));
+  // Reorder material / other moves; the email, print and link list them in this order.
+  const swapMoves = (i, j) => { const l = S.board.moves; if (!l?.[i] || !l?.[j]) return; [l[i], l[j]] = [l[j], l[i]]; changed(); };
+  $$('[data-mup]').forEach((el) => el.addEventListener('click', () => swapMoves(+el.dataset.mup, +el.dataset.mup - 1)));
+  $$('[data-mdn]').forEach((el) => el.addEventListener('click', () => swapMoves(+el.dataset.mdn, +el.dataset.mdn + 1)));
   $$('[data-day]').forEach((el) => el.addEventListener('click', () => goDate(addWorkdays(S.date, Number(el.dataset.day)))));
   $('#sdDate').addEventListener('change', (e) => goDate(e.target.value));
   $('#sdQ').addEventListener('input', (e) => { query = e.target.value; applySearch(true); });

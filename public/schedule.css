@@ -94,6 +94,11 @@ body.sched-on { font-size: 15px; }
 .drop-on { box-shadow: 0 0 0 2px var(--green-2); }
 .sd-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .92; box-shadow: 0 10px 24px rgba(0,48,46,.25); transform: rotate(-1.5deg); }
 body.sd-dragging, body.sd-dragging * { cursor: grabbing !important; }
+.sd-mrow { display: flex; gap: 4px; align-items: stretch; margin-bottom: 4px; }
+.sd-mrow .sd-haul { flex: 1; min-width: 0; margin: 0; }
+.sd-ord { display: flex; gap: 3px; }
+.sd-up { min-width: 30px; font-size: 12px; line-height: 1; padding: 0 6px; border: 1px solid #C7D0CD; background: #fff; border-radius: 4px; cursor: pointer; color: var(--green-ink); }
+.sd-up:disabled { opacity: .35; cursor: default; }
 .sd-haul { display: block; width: 100%; text-align: left; font: inherit; font-size: 13px; background: var(--tan-soft); border: 1px solid #E8CDB0; border-radius: 7px; padding: 4px 8px; cursor: pointer; color: var(--green-ink); }
 
 /* ---------- side panels ---------- */
