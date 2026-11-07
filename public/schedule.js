@@ -854,6 +854,12 @@ function foremanAt(loc, pid) {
   const f = (S.board.people[loc] || []).find((a) => a.role === 'Foreman' && a.id !== pid);
   return f ? personName(f.id).replace(/\.$/, '') : '';
 }
+// Machines sometimes change on site without the office knowing, so the text calls it the planned machine.
+function plannedMachine(a) {
+  const m = a.machine && S.equip[a.machine];
+  if (!m) return '';
+  return a.role === 'Foreman' ? ` Planned machine: ${m.label}.` : ` Planned machine: ${m.label}. Check with your foreman.`;
+}
 function draftText(t) {
   const when = short(S.date);
   const a = t.a;
@@ -866,15 +872,15 @@ function draftText(t) {
   }
   if (t.loc === 'LANDSCAPE') {
     const lf = a.role === 'Foreman' ? ' You are running the crew.' : (foremanAt(t.loc, t.pid) ? ` Foreman: ${foremanAt(t.loc, t.pid)}.` : '');
-    const lr = a.machine && S.equip[a.machine] ? ` You're on ${S.equip[a.machine].label}.` : '';
+    const lr = plannedMachine(a);
     const ln = S.board.jobNotes.LANDSCAPE ? ` ${S.board.jobNotes.LANDSCAPE.replace(/\.?$/, '.')}` : '';
     return `L&H: ${when} you're on the Landscaping Crew.${lf}${lr}${ln}${note}`;
   }
   const j = S.jobs[t.loc] || { name: 'the job' };
   const num = j.number && /^\d/.test(j.number) ? ` (${j.number})` : '';
-  const where = j.address ? ` ${j.address}. Map: ${mapLink(j.address)}` : '';
+  const where = j.address ? ` ${j.address.replace(/\.?$/, '.')}` : '';
   const fm = a.role === 'Foreman' ? ' You are running the crew.' : (foremanAt(t.loc, t.pid) ? ` Foreman: ${foremanAt(t.loc, t.pid)}.` : '');
-  const run = a.machine && S.equip[a.machine] ? ` You're on ${S.equip[a.machine].label}.` : '';
+  const run = plannedMachine(a);
   const jn = S.board.jobNotes[t.loc] ? ` ${S.board.jobNotes[t.loc].replace(/\.?$/, '.')}` : '';
   return `L&H: ${when} you're at ${j.name}${num}.${where}${fm}${run}${jn}${note}`;
 }
