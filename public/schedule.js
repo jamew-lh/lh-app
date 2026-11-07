@@ -35,6 +35,9 @@ function addWorkdays(s, n) {
   for (let left = Math.abs(n); left > 0;) { d.setUTCDate(d.getUTCDate() + step); if (![0, 6].includes(d.getUTCDay())) left -= 1; }
   return iso(d);
 }
+// Saturdays (and Sundays) start with empty crews. Weekdays copy from the last weekday (the server skips weekends).
+const isWeekend = (s) => [0, 6].includes(toD(s).getUTCDay());
+const nextSaturday = (s) => { const d = toD(s); d.setUTCDate(d.getUTCDate() + ((6 - d.getUTCDay() + 7) % 7 || 7)); return iso(d); };
 const todayNY = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
 const short = (s) => toD(s).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
 const md = (s) => toD(s).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', timeZone: 'UTC' });
@@ -90,11 +93,14 @@ function spotKey(b, pid) {
   const jobNote = isJob(hit.loc) ? (b.jobNotes?.[hit.loc] || '') : (hit.loc === 'DRIVERS' && b === S.board ? driverMoves(pid) : '');
   return { loc: hit.loc, note: hit.a.note || '', jobNote };
 }
+// The day texts are compared with. A weekend day starts empty, so everyone placed on it is flagged.
+const compareBoard = () => (isWeekend(S.date) ? emptyBoard() : S.prev?.board);
 function textStatus(pid) {
-  if (!S.prev) return null;
+  const base = compareBoard();
+  if (!base) return null;
   const now = spotKey(S.board, pid);
   if (!now) return null;
-  const was = spotKey(S.prev.board, pid);
+  const was = spotKey(base, pid);
   const changed = !was || was.loc !== now.loc || (now.note && now.note !== was.note) || (now.jobNote && now.jobNote !== was.jobNote);
   if (!changed) return { kind: 'same' };
   const key = `${now.loc}|${now.note}|${now.jobNote}`;
@@ -112,7 +118,7 @@ function textList() {
   return out;
 }
 function droppedSincePrev() {
-  if (!S.prev) return [];
+  if (!S.prev || isWeekend(S.date)) return [];
   const out = [];
   for (const list of Object.values(S.prev.board.people || {})) {
     for (const a of list || []) if (!locOf(S.board, a.id) && !fullDayOff(a.id)) out.push(a.id);
@@ -177,9 +183,19 @@ function buildNewDay(date) {
     }
     b.moves = [];
     dropRemovedPeople(b, date);
+    const weekend = isWeekend(date);
+    if (weekend) {
+      // Smaller crew: keep the jobs and where the machines are; start crews, notes and hired trucks empty.
+      for (const loc of Object.keys(b.people)) b.people[loc] = [];
+      b.jobNotes = {};
+      b.haul = {};
+      removed.length = 0;
+    }
     const synced = syncEquipment(b, S.prev.board.eqSyncAt || S.prev.created, date);
     const moved = [...new Set([...synced, ...applyEquipmentMoves(b, S.moves)])];
-    const msg = [`Started ${short(date)} as a copy of ${short(S.prev.date)}. Just move what changes.`];
+    const msg = [weekend
+      ? `${short(date)} starts with empty crews. Jobs and machines are copied from ${short(S.prev.date)}; drag in who's working. Monday will copy the last weekday, not this day.`
+      : `Started ${short(date)} as a copy of ${short(S.prev.date)}. Just move what changes.`];
     if (removed.length) msg.push(`<b>Taken off for vacation:</b> ${removed.map(esc).join(', ')}.`);
     if (moved.length) msg.push(`<b>Equipment moves from the equipment app:</b> ${moved.map(esc).join(', ')}.`);
     msg.push('Saved as soon as you change something.');
@@ -329,6 +345,7 @@ function render(first = false) {
       <button class="sd-btn" data-day="-1" title="Previous workday" aria-label="Previous workday">◀</button>
       <label class="sd-date"><b>${esc(longDate(S.date))}</b><input type="date" id="sdDate" value="${S.date}"></label>
       <button class="sd-btn" data-day="1" title="Next workday" aria-label="Next workday">▶</button>
+      ${isWeekend(S.date) ? '' : `<button class="sd-btn" id="sdSat" title="Go to ${esc(short(nextSaturday(S.date)))}">Sat</button>`}
     </div>
     <input type="search" id="sdQ" placeholder="Find a person or machine…" value="${esc(query)}">
     <span id="sdSave" class="sd-save">${esc(savedText())}</span>
@@ -592,6 +609,7 @@ function wire() {
   $$('[data-mdn]').forEach((el) => el.addEventListener('click', () => swapMoves(+el.dataset.mdn, +el.dataset.mdn + 1)));
   $$('[data-day]').forEach((el) => el.addEventListener('click', () => goDate(addWorkdays(S.date, Number(el.dataset.day)))));
   $('#sdDate').addEventListener('change', (e) => goDate(e.target.value));
+  $('#sdSat')?.addEventListener('click', () => goDate(nextSaturday(S.date)));
   $('#sdQ').addEventListener('input', (e) => { query = e.target.value; applySearch(true); });
   $('#sdAddJob').addEventListener('change', (e) => {
     const id = e.target.value;
@@ -867,14 +885,14 @@ function whyText(t) {
   return t.loc === 'DRIVERS' ? 'Drivers · moves for the day' : `${locName(t.loc)} · job note changed`;
 }
 async function openTexts() {
-  if (!S.prev) {
+  if (!compareBoard()) {
     modal(`<h3>Texts</h3><p>There's no saved day before ${esc(short(S.date))} to compare with, so nobody is flagged yet. Starting with the next day, anyone whose spot or note changes gets a <b>txt</b> tag.</p><div class="sd-btns"><button class="sd-btn primary" data-close>OK</button></div>`);
     return;
   }
   const list = textList();
   const dropped = droppedSincePrev();
   const back = modal(`<h3>Texts for ${esc(longDate(S.date))}</h3>
-    <p class="sd-muted">Everyone whose job, note or job note changed since ${esc(short(S.prev.date))}. Edit any message, then send. Texts go through TextMagic to the person's TextMagic contact (or their cell in Airtable).</p>
+    <p class="sd-muted">${isWeekend(S.date) ? 'Everyone working this day.' : `Everyone whose job, note or job note changed since ${esc(short(S.prev.date))}.`} Edit any message, then send. Texts go through TextMagic to the person's TextMagic contact (or their cell in Airtable).</p>
     ${S.setup.textsReady ? '' : '<div class="err">Texts are not set up yet: add TEXTMAGIC_USERNAME and TEXTMAGIC_API_KEY in Netlify.</div>'}
     ${dropped.length ? `<div class="sd-alert">Not on this day's schedule (no text drafted): ${dropped.map((id) => esc(personName(id))).join(', ')}</div>` : ''}
     ${list.map((t, i) => `<div class="sd-msg ${t.kind === 'sent' ? 'done' : ''}">

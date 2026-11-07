@@ -216,3 +216,13 @@ test('email / print / link: equipment moves listed under their driver, others af
   // no drivers on the board: moves still show
   assert.match(dayHtml({ ...d, board: { jobs: [], people: {}, equip: {} } }, 'email'), /Equipment moves.*Jared E: 349-02/s);
 });
+
+test('Saturdays: Monday copies Friday even when a Saturday was saved; Saturday copies Friday', async () => {
+  const a = await editor();
+  const fri = '2026-11-13'; const sat = '2026-11-14'; const mon = '2026-11-16';
+  assert.equal((await call('PUT', `/api/schedule/day?date=${fri}`, { cookie: a.cookie, body: { board: board(), version: 0 } })).status, 200);
+  const small = board({ people: { recJOB0000000006: [{ id: 'recEMP0000000003', role: 'Foreman' }], OFF: [], SHOP: [], DRIVERS: [] } });
+  assert.equal((await call('PUT', `/api/schedule/day?date=${sat}`, { cookie: a.cookie, body: { board: small, version: 0 } })).status, 200);
+  assert.equal((await call('GET', `/api/schedule/day?date=${sat}`, { cookie: a.cookie })).data.prev.date, fri);
+  assert.equal((await call('GET', `/api/schedule/day?date=${mon}`, { cookie: a.cookie })).data.prev.date, fri);
+});
