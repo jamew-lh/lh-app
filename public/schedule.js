@@ -487,12 +487,18 @@ function sidebar() {
   // equipment moves: from the equipment app, and changes on this board since the last saved day
   const appMoves = S.moves.map((m) => `<div class="sd-row move"><span><b>${esc(m.equipment)}</b> ${esc(m.from)} → ${esc(m.to)}</span><span class="d">${esc([m.driver, m.status].filter(Boolean).join(' · '))}</span></div>`).join('');
   const inApp = new Set(S.moves.map((m) => m.equipment.toLowerCase()));
+  // Where the equipment app last put each machine (its Change Log, else its Location field).
+  const appLoc = {};
+  for (const e of S.setup.equipment) appLoc[e.label.toLowerCase()] = e.job || 'YARD';
+  for (const c of S.eqChanges || []) appLoc[c.equipment.toLowerCase()] = c.toJob || 'YARD';
   const boardMoves = [];
   if (S.prev) {
     for (const e of S.setup.equipment) {
       const now = equipLocs(b, e.id)[0] || 'YARD';
       const was = equipLocs(S.prev.board, e.id)[0] || 'YARD';
-      if (now !== was && !inApp.has(e.label.toLowerCase())) boardMoves.push(`<div class="sd-row move"><span><b>${esc(e.label)}</b> ${esc(locName(was))} → ${esc(locName(now))}</span></div>`);
+      const key = e.label.toLowerCase();
+      // Already in the equipment app (today's Moves, or the app has it where the board has it): not a board-only move.
+      if (now !== was && !inApp.has(key) && appLoc[key] !== now) boardMoves.push(`<div class="sd-row move"><span><b>${esc(e.label)}</b> ${esc(locName(was))} → ${esc(locName(now))}</span></div>`);
     }
   }
   const om = b.moves || [];
