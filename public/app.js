@@ -12,6 +12,8 @@ const LINKS = {
   jobsiteBases: 'https://www.lyonshohl.com/s/__Jobsite-bases_10-08-26.pdf',
   equipment: 'https://lh-equipment.netlify.app/',
   pmService: 'https://lh-service.netlify.app/',
+  // Material Orders app (shown to people with MATERIAL ACCESS checked). Button stays hidden while this is blank.
+  materialOrders: '',
   // Supervisors section (Site Supervisors, Foremen, Management). Add or remove forms here.
   esReports: [
     ['Sadsbury E&S Report', 'https://form.jotform.com/252333380553150/prefill/68a867a137353566f02d11400676'],
@@ -255,6 +257,10 @@ function showHome() {
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">
         ${tile({ href: me.calendarUrl, icon: 'sun', title: 'Vacation Calendar', sub: 'Who is off, month by month', cls: 'office wide', external: true })}
+      </div>` : ''}
+      ${me.material && LINKS.materialOrders ? `<div class="section-title">Materials</div>
+      <div class="tiles">
+        ${tile({ href: LINKS.materialOrders, icon: 'codes', title: 'Material Orders', sub: 'POs, deliveries and what’s left to arrive', cls: 'office wide', external: true })}
       </div>` : ''}
       ${me.equipment || (me.pm && LINKS.pmService) ? `<div class="section-title">Equipment</div>
       <div class="tiles">

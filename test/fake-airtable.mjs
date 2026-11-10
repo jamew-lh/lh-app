@@ -23,7 +23,7 @@ export const EMPLOYEE_RECORDS = [
   emp('recX7mle94324fL0y', 'Korth, Brittany', '4444', 'Office', '(610) 555-0112'),
   emp('recu5oe4hLAB7KXLJ', 'Woodard, James L.', '6060', 'Management', '(610) 858-4549'),
   emp('recb761dYQ0WyxkaE', 'Grafstrom, Lisamarie C.', '7070', 'Office', '(610) 574-0348'),
-  emp('recIwytS3JrkBVb12', 'Arment, Leon R.', '8080', 'Management', '(610) 636-7289'),
+  emp('recIwytS3JrkBVb12', 'Arment, Leon R.', '8080', 'Management', '(610) 636-7289', 'Current Employee', 'SIte Contractors', { [E.f.materialAccess]: true }),
   emp('recbAiVcHKoqqVXYZ', 'Enck, Tyler L.', '8642', 'Shop', '(610) 555-0108', 'Current Employee', 'Paving'),
 ];
 
