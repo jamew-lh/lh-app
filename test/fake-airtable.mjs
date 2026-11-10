@@ -114,8 +114,9 @@ export const EQUIPMENT_RECORDS = [
 ];
 const M = SC.moves.f;
 export const MOVE_RECORDS = [
-  { id: 'recMOV0000000001', fields: { [M.equipment]: '938-09', [M.date]: '2026-11-10', [M.from]: 'HB Shop', [M.to]: 'Sadsbury', [M.status]: { name: 'Scheduled' }, [M.driver]: 'Reed', [M.truck]: '01-08' } },
+  { id: 'recMOV0000000001', fields: { [M.equipment]: '938-09', [M.date]: '2026-11-10', [M.from]: 'HB Shop', [M.to]: 'Sadsbury', [M.status]: { name: 'Scheduled' }, [M.driver]: 'Reed', [M.truck]: '01-08', [M.order]: 2 } },
   { id: 'recMOV0000000002', fields: { [M.equipment]: '730-06', [M.date]: '2026-11-09', [M.from]: 'Southern berks', [M.to]: 'Sadsbury', [M.status]: { name: 'Complete' } } },
+  { id: 'recMOV0000000003', fields: { [M.equipment]: '349-02', [M.date]: '2026-11-10', [M.from]: 'Sadsbury', [M.to]: 'HB Shop', [M.status]: { name: 'Need' }, [M.driver]: 'Reed', [M.order]: 1 } },
 ];
 const CH = SC.changes.f;
 const hoursAgo = (h) => new Date(Date.now() - h * 3600000).toISOString();
