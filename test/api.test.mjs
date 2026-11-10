@@ -118,6 +118,12 @@ test('vendors: signed-in only, sorted by type then name', async () => {
   assert.equal(r.data.vendors[0].phone, '(610) 869-5556');
 });
 
+test('Material Orders: only people with MATERIAL ACCESS checked', async () => {
+  assert.equal((await login('Arment', '8080')).data.person.material, true);
+  assert.equal((await login('Boss', '3333')).data.person.material, false);   // Management, box not checked
+  assert.equal((await login('Rivera', '4321')).data.person.material, false);
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);
