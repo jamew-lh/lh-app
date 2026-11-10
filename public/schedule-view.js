@@ -66,7 +66,7 @@ export function dayHtml(d, mode = 'page') {
     const j = jid === 'LANDSCAPE' ? { name: SPECIAL.LANDSCAPE } : d.jobs[jid] || { name: 'Job' };
     const crew = b.people?.[jid] || [];
     const operated = new Set(crew.map((a) => a.machine).filter(Boolean));
-    const eq = (b.equip?.[jid] || []).filter((e) => !operated.has(e)).map(Q);
+    const eq = sortEquipIds((b.equip?.[jid] || []).filter((e) => !operated.has(e)), d.equipment).map(Q);
     const haul = (b.haul?.[jid] || []).map((h) => para(esc(haulText(h, d.haulers[h.hauler]?.name))));
     if (!crew.length && !haul.length && (mode !== 'page' || jid === 'LANDSCAPE')) continue;     // parked equipment only: leave off the email/print
     const sub = [j.number && /^\d/.test(j.number) ? j.number : '', j.supervisor && `Sup: ${esc(j.supervisor)}`,
@@ -116,6 +116,25 @@ export function dayHtml(d, mode = 'page') {
  * empty space under them (a plain grid makes every card in a row as tall as the tallest).
  * Order still runs left to right. Safe to call again (e.g. after the window is resized).
  */
+// The order James wants equipment listed in, by the equipment table's Type. Anything else goes after, A–Z.
+const TYPE_ORDER = ['excavator', 'dozer', 'articulating truck', 'roller', 'rubber tire loader', 'backhoe', 'skid loader',
+  'track loader', 'slinger', 'tractor', 'plow disk', 'scraper', 'sweeper', 'attachment', 'trench box', 'manhole box',
+  'stone box', 'shoring', 'strawblower', 'rental', 'zipper', 'bucket'];
+const typeRank = (t) => {
+  const k = String(t || '').trim().toLowerCase().replace(/^plow disc$/, 'plow disk');
+  if (!k) return TYPE_ORDER.length + 1;            // no type: very last
+  const i = TYPE_ORDER.indexOf(k);
+  return i < 0 ? TYPE_ORDER.length : i;
+};
+/** Sort equipment records by type (James's order), then type name, then equipment number. */
+export function byEquipmentType(a, b) {
+  return typeRank(a?.type) - typeRank(b?.type)
+    || String(a?.type || '~').localeCompare(String(b?.type || '~'))
+    || String(a?.label || '').localeCompare(String(b?.label || ''), undefined, { numeric: true });
+}
+/** Sort a list of equipment record IDs, given a lookup of id → record. */
+export const sortEquipIds = (ids, lookup) => [...ids].sort((x, y) => byEquipmentType(lookup[x], lookup[y]));
+
 export function stackCards(box, minWidth = 260, gap = 12) {
   if (!box) return;
   const loose = [...box.children].filter((c) => !c.classList.contains('mcol'));

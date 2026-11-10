@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards } from './schedule-view.js';
+import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -396,7 +396,7 @@ function jobCard(jid) {
   const b = S.board;
   const crew = b.people[jid] || [];
   const operated = new Set(crew.map((a) => a.machine).filter(Boolean));
-  const eqs = (b.equip[jid] || []).filter((e) => !operated.has(e) && S.equip[e]);
+  const eqs = sortEquipIds((b.equip[jid] || []).filter((e) => !operated.has(e) && S.equip[e]), S.equip);
   const haul = b.haul[jid] || [];
   const warns = jobWarnings(jid);
   const note = b.jobNotes[jid];
@@ -475,7 +475,7 @@ function sidebar() {
 
   const landCrew = b.people.LANDSCAPE || [];
   const landRun = new Set(landCrew.map((a) => a.machine).filter(Boolean));
-  const landEq = (b.equip.LANDSCAPE || []).filter((e) => !landRun.has(e) && S.equip[e]);
+  const landEq = sortEquipIds((b.equip.LANDSCAPE || []).filter((e) => !landRun.has(e) && S.equip[e]), S.equip);
   const landWarn = jobWarnings('LANDSCAPE');
   const landBody = `<div class="sd-landhead"><span class="sd-muted">${landCrew.length} crew · ${(b.equip.LANDSCAPE || []).length} equip</span><button class="sd-link" data-jobnote="LANDSCAPE">${b.jobNotes.LANDSCAPE ? 'Edit note' : '+ Note'}</button></div>
     ${b.jobNotes.LANDSCAPE ? `<div class="sd-jobnote">${esc(b.jobNotes.LANDSCAPE)}</div>` : ''}
@@ -509,13 +509,13 @@ function sidebar() {
     <div class="sd-sub">Material / other moves</div>${other}<button class="sd-link add" id="sdAddMove">+ Add a move</button>`;
 
   const downIds = S.setup.equipment.filter((e) => e.down && !equipLocs(b, e.id).length).map((e) => e.id);
-  const repairBody = `<div class="sd-zone eq" data-zone="equip:REPAIR">${[...(b.equip.REPAIR || []), ...downIds].map((e) => eqChip(e, 'REPAIR')).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>`;
+  const repairBody = `<div class="sd-zone eq" data-zone="equip:REPAIR">${sortEquipIds([...(b.equip.REPAIR || []), ...downIds], S.equip).map((e) => eqChip(e, 'REPAIR')).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>`;
 
   const placedEq = new Set(Object.values(b.equip).flat());
   // Only machines with TRACKING checked in the equipment table (the ones the equipment app follows).
   const inYard = S.setup.equipment.filter((e) => e.tracked && !placedEq.has(e.id) && !e.down);
-  const types = [...new Set(inYard.map((e) => e.type).filter(Boolean))].sort();
-  const shown = inYard.filter((e) => (!yard.type || e.type === yard.type) && (!yard.q || e.label.toLowerCase().includes(yard.q.toLowerCase())));
+  const types = [...new Set([...inYard].sort(byEquipmentType).map((e) => e.type).filter(Boolean))];
+  const shown = [...inYard].sort(byEquipmentType).filter((e) => (!yard.type || e.type === yard.type) && (!yard.q || e.label.toLowerCase().includes(yard.q.toLowerCase())));
   const yardBody = `<div class="sd-yardtools"><input id="sdYardQ" placeholder="Filter yard…" value="${esc(yard.q)}">
     <select id="sdYardType"><option value="">All types</option>${types.map((t) => `<option ${t === yard.type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
     <div class="sd-zone eq" data-zone="equip:YARD">${shown.map((e) => eqChip(e.id, null)).join('') || '<div class="sd-empty">Nothing matches</div>'}</div>`;
@@ -746,7 +746,7 @@ function editPerson(pid) {
   if (!hit) return;
   const p = S.people[pid] || { name: 'Former employee', full: '', position: '', cdl: [] };
   const a = hit.a;
-  const machines = (S.board.equip[hit.loc] || []).map((e) => S.equip[e]).filter(Boolean);
+  const machines = (S.board.equip[hit.loc] || []).map((e) => S.equip[e]).filter(Boolean).sort(byEquipmentType);
   const back = modal(`<h3>${esc(p.name)} <span class="sd-muted">${esc(p.full)}</span></h3>
     <p class="sd-muted">${esc(locName(hit.loc))} · ${esc(p.position || '—')}${p.cdl?.length ? ` · ${esc(p.cdl.join(', '))}` : ''}</p>
     <label class="sd-field">Where ${esc(p.name)} works<select id="eWhere">${whereOptions(hit.loc)}</select></label>
