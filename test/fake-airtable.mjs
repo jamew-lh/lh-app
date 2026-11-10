@@ -138,6 +138,11 @@ export const HAULER_RECORDS = [
   { id: 'recHAU0000000002', fields: { [H.name]: 'Quarry - Martin Stone' } },
   { id: 'recHAU0000000003', fields: { [H.name]: 'Leary' } },
 ];
+const SB = SC.subs.f;
+export const SUB_RECORDS = [
+  { id: 'recSUB0000000001', fields: { [SB.name]: 'Valley Paving' } },
+  { id: 'recSUB0000000002', fields: { [SB.name]: 'Brandywine Electric' } },
+];
 
 // Airtable formulas used by the app, enough to filter like Airtable would.
 function formulaFilter(formula, records, fieldOf) {
@@ -222,7 +227,8 @@ export function fakeFetch({ fail = false } = {}) {
       : base === SC.equipment.base && table === SC.equipment.table ? EQUIPMENT_RECORDS
       : base === SC.timeOff.base && table === SC.timeOff.table ? TIMEOFF_RECORDS
       : base === SC.changes.base && table === SC.changes.table ? CHANGE_RECORDS
-      : base === SC.haulers.base && table === SC.haulers.table ? HAULER_RECORDS : null;
+      : base === SC.haulers.base && table === SC.haulers.table ? HAULER_RECORDS
+      : base === SC.subs.base && table === SC.subs.table ? SUB_RECORDS : null;
     if (!records) return new Response('{}', { status: 404 });
     // two pages to exercise paging
     const offset = Number(u.searchParams.get('offset') || 0);

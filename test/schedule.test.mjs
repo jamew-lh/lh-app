@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { handle } from '../lib/app.mjs';
 import { clearCache, resetForceFresh } from '../lib/store.mjs';
 import { resetThrottle } from '../lib/auth.mjs';
-import { describeChanges, addWorkdays } from '../lib/schedule.mjs';
+import { describeChanges, addWorkdays, cleanBoard } from '../lib/schedule.mjs';
 import { dayHtml, dayText, byEquipmentType } from '../public/schedule-view.js';
 import { fakeFetch, addScheduleCrew } from './fake-airtable.mjs';
 
@@ -69,6 +69,7 @@ test('setup: people with schedule names and no phone numbers, equipment placed a
   assert.equal(eq['Old Plate'].tracked, false);
   assert.ok(!eq['Old Dozer'], 'sold equipment left out');
   assert.deepEqual(r.data.haulers.map((h) => h.name), ['Leary', 'Quarry - Martin Stone', 'Risbon']);
+  assert.deepEqual(r.data.subs.map((x) => x.name), ['Brandywine Electric', 'Valley Paving']);
   assert.equal(r.data.linkPeople, 3);
 });
 
@@ -231,4 +232,19 @@ test('equipment is listed by type in James\'s order, then other types A–Z, the
   const list = [['B-1', 'Bucket'], ['V-1', 'Vehicle'], ['E-10', 'Excavator'], ['E-2', 'Excavator'], ['P-1', 'Plow Disc'],
     ['D-1', 'Dozer'], ['G-1', 'Generator'], ['N-1', ''], ['R-1', 'Rental'], ['A-1', 'Air Compressor']].map(([label, type]) => ({ label, type }));
   assert.deepEqual(list.sort(byEquipmentType).map((e) => e.label), ['E-2', 'E-10', 'D-1', 'P-1', 'R-1', 'B-1', 'A-1', 'G-1', 'V-1', 'N-1']);
+});
+
+test('subcontractors: saved with the day, listed under hired trucks on the email / print / link', async () => {
+  const subs = { recJOB0000000006: [{ id: 's1', sub: 'recSUB0000000001', note: 'Binder course, start 7:00' }] };
+  assert.deepEqual(cleanBoard({ jobs: [], subs }).subs, subs);
+  const d = {
+    date: '2026-11-10', jobs: { recJOB0000000006: { name: 'Sadsbury', number: '425224' } }, people: { p1: { name: 'Tony R.' } }, equipment: {},
+    haulers: { h1: { name: 'Risbon' } }, subs: { recSUB0000000001: { name: 'Valley Paving' } }, vacation: [],
+    board: { jobs: ['recJOB0000000006'], people: { recJOB0000000006: [{ id: 'p1', role: 'Foreman' }] }, equip: {}, jobNotes: {},
+      haul: { recJOB0000000006: [{ id: 'x', hauler: 'h1', trucks: 2 }] }, subs, moves: [] },
+  };
+  const html = dayHtml(d, 'email');
+  assert.ok(html.indexOf('Hired trucks') < html.indexOf('Subcontractors'), 'subcontractors come after hired trucks');
+  assert.match(html, /Valley Paving · Binder course, start 7:00/);
+  assert.match(dayText(d), /Sub: Valley Paving · Binder course, start 7:00/);
 });

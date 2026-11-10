@@ -59,6 +59,7 @@ Decisions James made (keep them unless he changes them):
 | Clicking a name | Editor has "Where … works" to move them anywhere, including a job not on the day yet (adds it). |
 | Saturdays | Smaller crew. A new Saturday (or Sunday) keeps jobs and machines from the last weekday but starts with empty crews, no notes, no hired trucks, no material moves. Everyone placed is flagged for a text. Weekdays always copy the last **weekday** (Monday copies Friday). Link goes to the usual Daily Schedule list. "Sat" button next to ◀ ▶. |
 | Equipment order | Unused equipment (job cards, Landscaping, Repair, Yard, machine picker, email/print/link) is sorted by Type: Excavator, Dozer, Articulating Truck, Roller, Rubber Tire Loader, Backhoe, Skid Loader, Track Loader, Slinger, Tractor, Plow Disk, Scraper, Sweeper, Attachment, Trench Box, Manhole Box, Stone Box, Shoring, Strawblower, Rental, Zipper, Bucket; other types A–Z; no type last. `TYPE_ORDER` in `schedule-view.js`. |
+| Subcontractors | Vendors → Sub-Contractors (Name). Drag onto a job like hired trucks; each line is sub + note. Board key `subs {jobId: [{id, sub, note}]}`. Job card order: Crew, Hired trucks, Subcontractors, Equipment (same on email/print/link). No texts to subs. Carry over on weekdays; Saturdays start empty. |
 | Back burner | Comparing the schedule with timecard entries. Don't build unless asked. |
 
 Board model (one JSON per day in Daily Schedules → Schedule Days, `Version` stops two editors overwriting each other):
