@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds } from './schedule-view.js';
+import { dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -52,14 +52,14 @@ const collapsed = new Set(['p-trucks-info']);
 function indexSetup(setup) {
   const by = (list) => Object.fromEntries(list.map((x) => [x.id, x]));
   return {
-    setup, people: by(setup.people), jobs: by(setup.jobs), equip: by(setup.equipment), haulers: by(setup.haulers),
+    setup, people: by(setup.people), jobs: by(setup.jobs), equip: by(setup.equipment), haulers: by(setup.haulers), subs: by(setup.subs || []),
     byLabel: Object.fromEntries(setup.equipment.map((e) => [e.label.toLowerCase(), e])),
   };
 }
-const emptyBoard = () => ({ jobs: [], people: { LANDSCAPE: [], OFF: [], SHOP: [], DRIVERS: [] }, equip: { LANDSCAPE: [], REPAIR: [] }, jobNotes: {}, haul: {}, moves: [], sent: {} });
+const emptyBoard = () => ({ jobs: [], people: { LANDSCAPE: [], OFF: [], SHOP: [], DRIVERS: [] }, equip: { LANDSCAPE: [], REPAIR: [] }, jobNotes: {}, haul: {}, subs: {}, moves: [], sent: {} });
 function normalize(b) {
   const out = { ...emptyBoard(), ...(b || {}) };
-  for (const k of ['people', 'equip', 'jobNotes', 'haul', 'sent']) out[k] = { ...(emptyBoard()[k] || {}), ...(out[k] || {}) };
+  for (const k of ['people', 'equip', 'jobNotes', 'haul', 'subs', 'sent']) out[k] = { ...(emptyBoard()[k] || {}), ...(out[k] || {}) };
   for (const j of out.jobs) { out.people[j] = out.people[j] || []; out.equip[j] = out.equip[j] || []; }
   return out;
 }
@@ -189,6 +189,7 @@ function buildNewDay(date) {
       for (const loc of Object.keys(b.people)) b.people[loc] = [];
       b.jobNotes = {};
       b.haul = {};
+      b.subs = {};
       removed.length = 0;
     }
     const synced = syncEquipment(b, S.prev.board.eqSyncAt || S.prev.created, date);
@@ -398,6 +399,7 @@ function jobCard(jid) {
   const operated = new Set(crew.map((a) => a.machine).filter(Boolean));
   const eqs = sortEquipIds((b.equip[jid] || []).filter((e) => !operated.has(e) && S.equip[e]), S.equip);
   const haul = b.haul[jid] || [];
+  const subs = b.subs[jid] || [];
   const warns = jobWarnings(jid);
   const note = b.jobNotes[jid];
   return `<div class="sd-job" data-job="${jid}">
@@ -411,6 +413,8 @@ function jobCard(jid) {
     <div class="sd-zone" data-zone="people:${jid}">${crew.map((a) => personChip(a, jid)).join('') || '<div class="sd-empty">Drag people here</div>'}</div>
     <div class="sd-zl">Hired trucks</div>
     <div class="sd-zone haul" data-zone="haul:${jid}">${haul.map((h) => `<button class="sd-haul" data-haul="${jid}|${h.id}">${esc(haulText(h, S.haulers[h.hauler]?.name))}</button>`).join('') || '<div class="sd-empty">Drag a hauler here</div>'}</div>
+    <div class="sd-zl">Subcontractors</div>
+    <div class="sd-zone haul" data-zone="sub:${jid}">${subs.map((x) => `<button class="sd-haul sd-subline" data-subline="${jid}|${x.id}">${esc(subText(x, S.subs[x.sub]?.name))}</button>`).join('') || '<div class="sd-empty">Drag a subcontractor here</div>'}</div>
     <div class="sd-zl">Equipment</div>
     <div class="sd-zone eq" data-zone="equip:${jid}">${eqs.map((e) => eqChip(e, jid)).join('') || '<div class="sd-empty">Drag equipment here</div>'}</div>
   </div>`;
@@ -525,6 +529,11 @@ function sidebar() {
   const truckBody = `<div class="sd-hint">Drag a hauler onto a job, then fill in trucks and what they're hauling.</div>
     <div class="sd-zone eq">${S.setup.haulers.map((h) => `<span class="sd-hauler" data-drag data-hid="${h.id}">${esc(h.name)}${totals[h.id] ? ` <b>${totals[h.id]}</b>` : ''}</span>`).join('') || '<div class="sd-empty">Add haulers in Airtable: Vendors → Hired Trucks</div>'}</div>`;
 
+  const subJobs = {};
+  for (const lines of Object.values(b.subs)) for (const x of lines || []) subJobs[x.sub] = (subJobs[x.sub] || 0) + 1;
+  const subBody = `<div class="sd-hint">Drag a subcontractor onto a job, then add a note.</div>
+    <div class="sd-zone eq">${(S.setup.subs || []).map((x) => `<span class="sd-hauler sd-subc" data-drag data-sid="${x.id}">${esc(x.name)}${subJobs[x.id] ? ` <b>${subJobs[x.id]}</b>` : ''}</span>`).join('') || '<div class="sd-empty">Add subcontractors in Airtable: Vendors → Sub-Contractors</div>'}</div>`;
+
   return [
     panel('p-land', 'Landscaping Crew', landCrew.length, 'every day', landBody),
     panel('p-vac', 'Vacation', today.length, 'timecard app', vacBody),
@@ -533,6 +542,7 @@ function sidebar() {
     panel('p-shop', 'Office / Shop', (b.people.SHOP || []).length, '', zone('SHOP')),
     panel('p-moves', 'Drivers / Moves', (b.people.DRIVERS || []).length, '', movesBody),
     panel('p-trucks', 'Hired trucks', Object.values(totals).reduce((x, y) => x + y, 0) || '', 'trucks today', truckBody),
+    panel('p-subs', 'Subcontractors', Object.values(subJobs).reduce((x, y) => x + y, 0) || '', 'on jobs today', subBody),
     panel('p-repair', 'Repair', (b.equip.REPAIR || []).length + downIds.length, '', repairBody),
     panel('p-yard', 'Yard', inYard.length, 'not on a job', yardBody),
   ].join('');
@@ -589,9 +599,10 @@ function removeJob(jid) {
   const n = (S.board.people[jid] || []).length;
   const m = (S.board.equip[jid] || []).length;
   const h = (S.board.haul[jid] || []).length;
-  if ((n || m || h) && !window.confirm(`Take ${S.jobs[jid]?.name || 'this job'} off ${short(S.date)}?\n${n} people go back to "Not scheduled", ${m} pieces of equipment go to the Yard${h ? `, and ${h} hired-truck lines are removed` : ''}.`)) return;
+  const sc = (S.board.subs[jid] || []).length;
+  if ((n || m || h || sc) && !window.confirm(`Take ${S.jobs[jid]?.name || 'this job'} off ${short(S.date)}?\n${n} people go back to "Not scheduled", ${m} pieces of equipment go to the Yard${h ? `, ${h} hired-truck lines are removed` : ''}${sc ? `, ${sc} subcontractor lines are removed` : ''}.`)) return;
   S.board.jobs = S.board.jobs.filter((j) => j !== jid);
-  delete S.board.people[jid]; delete S.board.equip[jid]; delete S.board.haul[jid]; delete S.board.jobNotes[jid];
+  delete S.board.people[jid]; delete S.board.equip[jid]; delete S.board.haul[jid]; delete S.board.subs[jid]; delete S.board.jobNotes[jid];
   changed();
 }
 
@@ -608,6 +619,7 @@ function wire() {
   $$('[data-rmjob]').forEach((el) => el.addEventListener('click', () => removeJob(el.dataset.rmjob)));
   $$('[data-jobnote]').forEach((el) => el.addEventListener('click', () => editJobNote(el.dataset.jobnote)));
   $$('[data-haul]').forEach((el) => el.addEventListener('click', () => { const [jid, id] = el.dataset.haul.split('|'); editHaul(jid, id); }));
+  $$('[data-subline]').forEach((el) => el.addEventListener('click', () => { const [jid, id] = el.dataset.subline.split('|'); editSub(jid, id); }));
   $$('[data-move]').forEach((el) => el.addEventListener('click', () => editOtherMove(el.dataset.move)));
   // Reorder material / other moves; the email, print and link list them in this order.
   const swapMoves = (i, j) => { const l = S.board.moves; if (!l?.[i] || !l?.[j]) return; [l[i], l[j]] = [l[j], l[i]]; changed(); };
@@ -636,8 +648,8 @@ function startDrag(e) {
   if (e.button !== 0) return;
   const el = e.currentTarget;
   e.preventDefault();
-  const kind = el.dataset.pid ? 'person' : el.dataset.eid ? 'equip' : 'hauler';
-  drag = { el, kind, id: el.dataset.pid || el.dataset.eid || el.dataset.hid, from: el.dataset.loc, x0: e.clientX, y0: e.clientY, ghost: null, target: null };
+  const kind = el.dataset.pid ? 'person' : el.dataset.eid ? 'equip' : el.dataset.sid ? 'sub' : 'hauler';
+  drag = { el, kind, id: el.dataset.pid || el.dataset.eid || el.dataset.sid || el.dataset.hid, from: el.dataset.loc, x0: e.clientX, y0: e.clientY, ghost: null, target: null };
   window.addEventListener('pointermove', moveDrag);
   window.addEventListener('pointerup', endDrag, { once: true });
 }
@@ -672,6 +684,7 @@ function dropTarget(x, y) {
   const ok = (drag.kind === 'person' && kind === 'people')
     || (drag.kind === 'equip' && kind === 'equip')
     || (drag.kind === 'hauler' && kind === 'haul')
+    || (drag.kind === 'sub' && kind === 'sub')
     || (drag.kind === 'equip' && kind === 'people' && isJob(loc) && onto);
   return ok ? { zone, kind, loc, onto } : null;
 }
@@ -692,6 +705,7 @@ function endDrag() {
   const ontoPid = t.onto && t.onto.dataset.pid !== d.id ? t.onto.dataset.pid : null;
   if (d.kind === 'person') movePerson(d.id, t.loc, ontoPid);
   else if (d.kind === 'hauler') editHaul(t.loc, null, d.id);
+  else if (d.kind === 'sub') editSub(t.loc, null, d.id);
   else if (t.kind === 'equip') moveEquip(d.id, t.loc);
   else moveEquip(d.id, t.loc, ontoPid);
 }
@@ -798,6 +812,25 @@ function editJobNote(jid) {
   $('#jSave', back).addEventListener('click', () => set($('#jNote', back).value.trim()));
   $('#jClear', back).addEventListener('click', () => set(''));
   $('#jNote', back).focus();
+}
+
+function editSub(jid, lineId, subId) {
+  const lines = (S.board.subs[jid] = S.board.subs[jid] || []);
+  const x = lines.find((y) => y.id === lineId) || { id: uid(), sub: subId || '', note: '' };
+  const isNew = !lines.includes(x);
+  const back = modal(`<h3>Subcontractor · ${esc(S.jobs[jid]?.name || '')}</h3>
+    <div class="sd-grid2">
+      <label class="sd-field">Subcontractor<select id="sS">${(S.setup.subs || []).map((y) => `<option value="${y.id}" ${y.id === x.sub ? 'selected' : ''}>${esc(y.name)}</option>`).join('')}</select></label>
+      <label class="sd-field wide">Note<input id="sNote" value="${esc(x.note)}" maxlength="200" placeholder="what they're doing, start time, who to meet…"></label>
+    </div>
+    <div class="sd-btns">${isNew ? '' : '<span class="left"><button class="sd-btn" id="sRm">Remove</button></span>'}<button class="sd-btn" data-close>Cancel</button><button class="sd-btn primary" id="sSave">Save</button></div>`);
+  $('#sSave', back).addEventListener('click', () => {
+    Object.assign(x, { sub: $('#sS', back).value, note: $('#sNote', back).value.trim() });
+    if (isNew) lines.push(x);
+    closeModal(); changed();
+  });
+  $('#sRm', back)?.addEventListener('click', () => { S.board.subs[jid] = lines.filter((y) => y !== x); closeModal(); changed(); });
+  $('#sNote', back).focus();
 }
 
 function editHaul(jid, lineId, haulerId) {
@@ -940,7 +973,7 @@ async function openTexts() {
 // ------------------------------------------------------------------ publish: email, print, link
 function viewData() {
   const vac = S.timeOff.filter((t) => t.date === S.date && !t.requested).map((t) => ({ person: t.person, half: t.half }));
-  return { date: S.date, board: S.board, people: S.people, jobs: S.jobs, equipment: S.equip, haulers: S.haulers, vacation: vac, eqMoves: S.moves };
+  return { date: S.date, board: S.board, people: S.people, jobs: S.jobs, equipment: S.equip, haulers: S.haulers, subs: S.subs, vacation: vac, eqMoves: S.moves };
 }
 async function copyForEmail() {
   const d = viewData();

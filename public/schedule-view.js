@@ -14,6 +14,9 @@ export function longDate(iso) {
 
 export const mapLink = (address) => `https://maps.google.com/?q=${encodeURIComponent(address)}`;
 
+/** One subcontractor line as text: "ABC Paving · binder course, start 7:00" */
+export const subText = (x, name) => `${name || 'Subcontractor'}${x.note ? ` · ${x.note}` : ''}`;
+
 /** One hauling line as text: "Risbon ×3 tri-axle · 2A modified · Martin's → site · 7:00 · note" */
 export function haulText(h, haulerName) {
   const head = `${haulerName || 'Hired truck'}${h.trucks ? ` ×${h.trucks}` : ''}${h.kind ? ` ${h.kind}` : ''}`;
@@ -68,13 +71,15 @@ export function dayHtml(d, mode = 'page') {
     const operated = new Set(crew.map((a) => a.machine).filter(Boolean));
     const eq = sortEquipIds((b.equip?.[jid] || []).filter((e) => !operated.has(e)), d.equipment).map(Q);
     const haul = (b.haul?.[jid] || []).map((h) => para(esc(haulText(h, d.haulers[h.hauler]?.name))));
-    if (!crew.length && !haul.length && (mode !== 'page' || jid === 'LANDSCAPE')) continue;     // parked equipment only: leave off the email/print
+    const subs = (b.subs?.[jid] || []).map((x) => para(esc(subText(x, d.subs?.[x.sub]?.name))));
+    if (!crew.length && !haul.length && !subs.length && (mode !== 'page' || jid === 'LANDSCAPE')) continue;     // parked equipment only: leave off the email/print
     const sub = [j.number && /^\d/.test(j.number) ? j.number : '', j.supervisor && `Sup: ${esc(j.supervisor)}`,
       j.address && `<a href="${mapLink(j.address)}" ${s('v-map', `color:${GREEN}`)}>${esc(j.address)}</a>`].filter(Boolean).join(' · ');
     const note = b.jobNotes?.[jid] ? `<div ${s('v-jobnote', 'background:#FEF3C7;color:#92400E;border-radius:6px;padding:4px 8px;margin:6px 0;font-size:14px')}>${esc(b.jobNotes[jid])}</div>` : '';
     blocks.push(block(esc(j.name), sub, note
       + list('Crew', table(crew.map(crewRow).join('')))
       + list('Hired trucks', haul.join(''))
+      + list('Subcontractors', subs.join(''))
       + list('Equipment', eq.length ? para(esc(eq.join(', '))) : '')));
   }
   for (const loc of ['OFF', 'SHOP']) {
@@ -166,12 +171,13 @@ export function dayText(d) {
   const crew = (list) => (list || []).map((a) => `  ${P(a.id)}${a.role && a.role !== 'Operator' ? ` (${a.role})` : ''}${a.machine ? ` ${d.equipment[a.machine]?.label || ''}` : ''}${a.note ? ` — ${a.note}` : ''}`);
   for (const jid of [...(b.jobs || []), 'LANDSCAPE']) {
     const c = b.people?.[jid] || [];
-    if (!c.length && !(b.haul?.[jid] || []).length) continue;
+    if (!c.length && !(b.haul?.[jid] || []).length && !(b.subs?.[jid] || []).length) continue;
     const j = jid === 'LANDSCAPE' ? { name: SPECIAL.LANDSCAPE } : d.jobs[jid] || { name: 'Job' };
     lines.push(`${j.name}${j.number ? ` (${j.number})` : ''}`);
     if (b.jobNotes?.[jid]) lines.push(`  NOTE: ${b.jobNotes[jid]}`);
     lines.push(...crew(c));
     for (const h of b.haul?.[jid] || []) lines.push(`  Truck: ${haulText(h, d.haulers[h.hauler]?.name)}`);
+    for (const x of b.subs?.[jid] || []) lines.push(`  Sub: ${subText(x, d.subs?.[x.sub]?.name)}`);
     lines.push('');
   }
   for (const loc of ['OFF', 'SHOP']) {
