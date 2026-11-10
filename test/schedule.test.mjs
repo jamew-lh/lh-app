@@ -83,9 +83,9 @@ test('day: vacations from the timecard app (approved, half day, requested; denie
   assert.equal(on.find((t) => t.person === 'recEMP0000000023').half, true);
   assert.ok(!on.some((t) => t.person === 'recEMP0000000024'), 'denied is left out');
   assert.equal(r.data.timeOff.find((t) => t.person === 'recEMP0000000027').requested, true);
-  assert.equal(r.data.moves.length, 1);
-  assert.equal(r.data.moves[0].equipment, '938-09');
-  assert.equal(r.data.moves[0].toJob, 'recJOB0000000006');
+  // same order as the equipment app's "Scheduled and needed" list (Arrange order number)
+  assert.deepEqual(r.data.moves.map((m) => m.equipment), ['349-02', '938-09']);
+  assert.equal(r.data.moves[1].toJob, 'recJOB0000000006');
   assert.equal((await call('GET', '/api/schedule/day?date=nope', { cookie })).status, 400);
 });
 
