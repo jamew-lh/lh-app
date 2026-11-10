@@ -13,7 +13,7 @@ const LINKS = {
   equipment: 'https://lh-equipment.netlify.app/',
   pmService: 'https://lh-service.netlify.app/',
   // Material Orders app (shown to people with MATERIAL ACCESS checked). Button stays hidden while this is blank.
-  materialOrders: '',
+  materialOrders: 'https://lh-material-purchasing.netlify.app/',
   // Supervisors section (Site Supervisors, Foremen, Management). Add or remove forms here.
   esReports: [
     ['Sadsbury E&S Report', 'https://form.jotform.com/252333380553150/prefill/68a867a137353566f02d11400676'],
