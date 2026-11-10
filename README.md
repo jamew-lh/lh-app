@@ -8,7 +8,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 
 - Sign in: **last name + Timecard Pin** (the same PIN as the timecard app)
 - Who can sign in: every **Current Employee** whose Location is **SIte Contractors** and who has a Timecard Pin, plus anyone listed in `extraPeople` in `lib/config.mjs` (currently Tyler Enck)
-- **Equipment Viewer** button: only for positions Management, Office, Superviser / SUP, Foreman and Shop
+- **Equipment Viewer** button: positions Management, Office, Superviser / SUP, Foreman and Shop, plus anyone in `equipmentPeople` in `lib/config.mjs` (Jared Edwards)
 - **PM Service** button: only for position Shop
 - **Vacation Calendar** button: only for position Management (see step 3)
 - **Employee details in the phone list** (start date, driving list, medical card + expiration, license endorsements, home address): only Management and Superviser / SUP. Tap a name to open them. Other people's phones never receive this information.
