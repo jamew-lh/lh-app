@@ -124,6 +124,14 @@ test('Material Orders: only people with MATERIAL ACCESS checked', async () => {
   assert.equal((await login('Rivera', '4321')).data.person.material, false);
 });
 
+test('Equipment Viewer: named people outside the listed positions (Jared Edwards)', async () => {
+  const { EMPLOYEES } = await import('../lib/config.mjs');
+  const { canSeeEquipment } = await import('../lib/store.mjs');
+  assert.ok(EMPLOYEES.equipmentPeople.includes('recfbG45qMZzjBzT0'));
+  assert.equal(canSeeEquipment({ id: 'recfbG45qMZzjBzT0', position: 'Driver' }), true);
+  assert.equal(canSeeEquipment({ id: 'recSOMEONEELSE0001', position: 'Driver' }), false);
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);
