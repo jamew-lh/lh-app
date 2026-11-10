@@ -4,7 +4,7 @@ import { handle } from '../lib/app.mjs';
 import { clearCache, resetForceFresh } from '../lib/store.mjs';
 import { resetThrottle } from '../lib/auth.mjs';
 import { describeChanges, addWorkdays } from '../lib/schedule.mjs';
-import { dayHtml, dayText } from '../public/schedule-view.js';
+import { dayHtml, dayText, byEquipmentType } from '../public/schedule-view.js';
 import { fakeFetch, addScheduleCrew } from './fake-airtable.mjs';
 
 addScheduleCrew();
@@ -225,4 +225,10 @@ test('Saturdays: Monday copies Friday even when a Saturday was saved; Saturday c
   assert.equal((await call('PUT', `/api/schedule/day?date=${sat}`, { cookie: a.cookie, body: { board: small, version: 0 } })).status, 200);
   assert.equal((await call('GET', `/api/schedule/day?date=${sat}`, { cookie: a.cookie })).data.prev.date, fri);
   assert.equal((await call('GET', `/api/schedule/day?date=${mon}`, { cookie: a.cookie })).data.prev.date, fri);
+});
+
+test('equipment is listed by type in James\'s order, then other types A–Z, then no type', () => {
+  const list = [['B-1', 'Bucket'], ['V-1', 'Vehicle'], ['E-10', 'Excavator'], ['E-2', 'Excavator'], ['P-1', 'Plow Disc'],
+    ['D-1', 'Dozer'], ['G-1', 'Generator'], ['N-1', ''], ['R-1', 'Rental'], ['A-1', 'Air Compressor']].map(([label, type]) => ({ label, type }));
+  assert.deepEqual(list.sort(byEquipmentType).map((e) => e.label), ['E-2', 'E-10', 'D-1', 'P-1', 'R-1', 'B-1', 'A-1', 'G-1', 'V-1', 'N-1']);
 });

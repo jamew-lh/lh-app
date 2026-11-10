@@ -58,6 +58,7 @@ Decisions James made (keep them unless he changes them):
 | Landscaping Crew | Permanent crew (`LANDSCAPE`), top of the right side. Works like a job (crew, machines, note, texts) but has no Job Name List record. |
 | Clicking a name | Editor has "Where … works" to move them anywhere, including a job not on the day yet (adds it). |
 | Saturdays | Smaller crew. A new Saturday (or Sunday) keeps jobs and machines from the last weekday but starts with empty crews, no notes, no hired trucks, no material moves. Everyone placed is flagged for a text. Weekdays always copy the last **weekday** (Monday copies Friday). Link goes to the usual Daily Schedule list. "Sat" button next to ◀ ▶. |
+| Equipment order | Unused equipment (job cards, Landscaping, Repair, Yard, machine picker, email/print/link) is sorted by Type: Excavator, Dozer, Articulating Truck, Roller, Rubber Tire Loader, Backhoe, Skid Loader, Track Loader, Slinger, Tractor, Plow Disk, Scraper, Sweeper, Attachment, Trench Box, Manhole Box, Stone Box, Shoring, Strawblower, Rental, Zipper, Bucket; other types A–Z; no type last. `TYPE_ORDER` in `schedule-view.js`. |
 | Back burner | Comparing the schedule with timecard entries. Don't build unless asked. |
 
 Board model (one JSON per day in Daily Schedules → Schedule Days, `Version` stops two editors overwriting each other):
