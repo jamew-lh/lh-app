@@ -48,6 +48,11 @@ let S = null;          // { setup, people, jobs, equip, haulers, byLabel, date, 
 let query = '';
 let yard = { q: '', type: '' };
 const collapsed = new Set(['p-trucks-info']);
+// Jobs with nobody on the crew fold down to one line. `unfolded` = empty jobs the editor opened anyway.
+const unfolded = new Set();
+let foldEmpty = true;
+try { foldEmpty = localStorage.getItem('lh-sched-fold') !== 'off'; } catch { /* storage off */ }
+const isFolded = (jid) => foldEmpty && !(S.board.people[jid] || []).length && !unfolded.has(jid);
 
 function indexSetup(setup) {
   const by = (list) => Object.fromEntries(list.map((x) => [x.id, x]));
@@ -339,6 +344,7 @@ function render(first = false) {
   const keep = { y: window.scrollY, side: side ? side.scrollTop : 0 };
   const tl = textList();
   const b = S.board;
+  const emptyJobs = b.jobs.filter((j) => !(b.people[j] || []).length);
   const addable = Object.values(S.jobs).filter((j) => j.active && !b.jobs.includes(j.id)).sort((x, y) => x.name.localeCompare(y.name));
   C.app.innerHTML = `${topBar()}
   <div class="sd-tools"><div class="sd-wrap">
@@ -360,6 +366,8 @@ function render(first = false) {
     <section>
       <div class="sd-boardhead">
         <h2>Jobs <span>${b.jobs.length} on the board</span></h2>
+        ${emptyJobs.length ? `<button class="sd-link" id="sdFold">${foldEmpty ? `Show ${emptyJobs.length} empty job${emptyJobs.length === 1 ? '' : 's'}` : 'Fold empty jobs'}</button>` : ''}
+        <span class="spacer" style="flex:1"></span>
         <select id="sdAddJob"><option value="">+ Add a job to this day…</option>${addable.map((j) => `<option value="${j.id}">${esc(j.name)}${j.number ? ` — ${esc(j.number)}` : ''}</option>`).join('')}</select>
       </div>
       <div class="sd-board">${b.jobs.map(jobCard).join('') || '<p class="sd-hint">No jobs on this day yet. Use “Add a job” above.</p>'}</div>
@@ -402,9 +410,22 @@ function jobCard(jid) {
   const subs = b.subs[jid] || [];
   const warns = jobWarnings(jid);
   const note = b.jobNotes[jid];
+  if (isFolded(jid)) {
+    const bits = [(b.equip[jid] || []).length && `${(b.equip[jid] || []).length} equip`, haul.length && `${haul.length} truck line${haul.length === 1 ? '' : 's'}`,
+      subs.length && `${subs.length} sub${subs.length === 1 ? '' : 's'}`, note && 'note'].filter(Boolean);
+    const find = [...(b.equip[jid] || []).map((e) => S.equip[e]?.label || ''), ...haul.map((h) => S.haulers[h.hauler]?.name || ''), ...subs.map((x) => S.subs[x.sub]?.name || '')].join(' ');
+    return `<div class="sd-job mini" data-job="${jid}" data-zone="people:${jid}" data-folded="1" data-find="${esc(find)}" title="Nobody on the crew. Click to open, or drag people, equipment or trucks here.">
+    <div class="sd-job-h">
+      <div class="r1"><button class="sd-fold" data-unfold="${jid}" aria-label="Open this job">▸</button><b>${esc(j.name)}</b><span class="sd-num">${esc(j.number)}</span><button class="sd-x" data-rmjob="${jid}" title="Take this job off ${esc(short(S.date))}" aria-label="Remove job">×</button></div>
+      <div class="meta"><span>No crew${bits.length ? ` · ${esc(bits.join(' · '))}` : ''}</span></div>
+      ${warns.length ? `<div class="sd-warns">${warns.map((w) => `<div class="sd-warn ${w.red ? 'red' : ''}">${esc(w.t)}</div>`).join('')}</div>` : ''}
+    </div>
+  </div>`;
+  }
+  const canFold = foldEmpty && !crew.length;
   return `<div class="sd-job" data-job="${jid}">
     <div class="sd-job-h">
-      <div class="r1"><b>${esc(j.name)}</b><span class="sd-num">${esc(j.number)}</span><button class="sd-x" data-rmjob="${jid}" title="Take this job off ${esc(short(S.date))}" aria-label="Remove job">×</button></div>
+      <div class="r1">${canFold ? `<button class="sd-fold" data-refold="${jid}" title="Fold this empty job" aria-label="Fold this job">▾</button>` : ''}<b>${esc(j.name)}</b><span class="sd-num">${esc(j.number)}</span><button class="sd-x" data-rmjob="${jid}" title="Take this job off ${esc(short(S.date))}" aria-label="Remove job">×</button></div>
       <div class="meta">${j.supervisor ? `<span>Sup: ${esc(j.supervisor)}</span>` : ''}${j.address ? `<a href="${mapLink(j.address)}" target="_blank" rel="noopener" title="${esc(j.address)}">map</a>` : ''}<span>${crew.length} crew · ${(b.equip[jid] || []).length} equip</span><button class="sd-link" data-jobnote="${jid}">${note ? 'Edit note' : '+ Note'}</button></div>
       ${note ? `<div class="sd-jobnote">${esc(note)}</div>` : ''}
       ${warns.length ? `<div class="sd-warns">${warns.map((w) => `<div class="sd-warn ${w.red ? 'red' : ''}">${esc(w.t)}</div>`).join('')}</div>` : ''}
@@ -616,7 +637,15 @@ function wire() {
     });
   });
   $$('[data-drag]').forEach((el) => el.addEventListener('pointerdown', startDrag));
-  $$('[data-rmjob]').forEach((el) => el.addEventListener('click', () => removeJob(el.dataset.rmjob)));
+  $$('[data-rmjob]').forEach((el) => el.addEventListener('click', (e) => { e.stopPropagation(); removeJob(el.dataset.rmjob); }));
+  $$('.sd-job.mini').forEach((el) => el.addEventListener('click', () => { unfolded.add(el.dataset.job); render(); }));
+  $$('[data-refold]').forEach((el) => el.addEventListener('click', () => { unfolded.delete(el.dataset.refold); render(); }));
+  $('#sdFold')?.addEventListener('click', () => {
+    foldEmpty = !foldEmpty;
+    unfolded.clear();
+    try { localStorage.setItem('lh-sched-fold', foldEmpty ? 'on' : 'off'); } catch { /* storage off */ }
+    render();
+  });
   $$('[data-jobnote]').forEach((el) => el.addEventListener('click', () => editJobNote(el.dataset.jobnote)));
   $$('[data-haul]').forEach((el) => el.addEventListener('click', () => { const [jid, id] = el.dataset.haul.split('|'); editHaul(jid, id); }));
   $$('[data-subline]').forEach((el) => el.addEventListener('click', () => { const [jid, id] = el.dataset.subline.split('|'); editSub(jid, id); }));
@@ -659,6 +688,7 @@ function moveDrag(e) {
     if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) < 5) return;
     const r = drag.el.getBoundingClientRect();
     drag.dx = drag.x0 - r.left; drag.dy = drag.y0 - r.top;
+    if (drag.kind === 'person') drag.dy = -12;    // ride just below the pointer so the green "lands here" line stays visible
     drag.ghost = drag.el.cloneNode(true);
     drag.ghost.classList.add('sd-ghost');
     drag.ghost.style.width = `${r.width}px`;
@@ -670,23 +700,54 @@ function moveDrag(e) {
   drag.ghost.style.top = `${e.clientY - drag.dy}px`;
   clearOver();
   drag.target = dropTarget(e.clientX, e.clientY);
-  if (drag.target) {
-    drag.target.zone.classList.add('over');
-    if (drag.target.onto && drag.kind === 'equip') drag.target.onto.classList.add('drop-on');
+  const t = drag.target;
+  if (t) {
+    t.zone.classList.add('over');
+    if (t.onto && drag.kind === 'equip') t.onto.classList.add('drop-on');
   }
+  if (t?.slot && (t.slot.before || t.slot.after)) showSlot(t.slot); else hideSlot();
 }
+// People in a zone, top to bottom, leaving out the one being dragged.
+const chipsIn = (zone) => [...zone.querySelectorAll(':scope > .sd-chip[data-pid]')].filter((c) => c !== drag?.el);
+// The person whose name the pointer is level with, counting the gaps between names (for dropping a machine on an operator).
+function chipAt(zone, y) {
+  for (const c of chipsIn(zone)) { const r = c.getBoundingClientRect(); if (y >= r.top - 5 && y <= r.bottom + 5) return c; }
+  return null;
+}
+// Where a dragged person lands: above the first name whose middle is below the pointer, else at the bottom.
+function slotAt(zone, y) {
+  const chips = chipsIn(zone);
+  const i = chips.findIndex((c) => { const r = c.getBoundingClientRect(); return y < r.top + r.height / 2; });
+  return { before: i >= 0 ? chips[i] : null, after: i > 0 ? chips[i - 1] : i < 0 ? chips[chips.length - 1] || null : null };
+}
+function showSlot(slot) {
+  let line = $('#sdInsLine');
+  if (!line) { line = document.createElement('div'); line.id = 'sdInsLine'; line.className = 'sd-insline'; document.body.appendChild(line); }
+  const a = slot.after?.getBoundingClientRect(), b = slot.before?.getBoundingClientRect();
+  const ref = b || a;
+  const y = a && b ? (a.bottom + b.top) / 2 : b ? b.top - 4 : a.bottom + 4;
+  Object.assign(line.style, { left: `${ref.left}px`, width: `${ref.width}px`, top: `${y}px` });
+  line.hidden = false;
+}
+function hideSlot() { const l = $('#sdInsLine'); if (l) l.hidden = true; }
+
+// A folded (empty) job card takes anything: people go on the crew, machines in equipment, and so on.
+const FOLDED_ZONE = { person: 'people', equip: 'equip', hauler: 'haul', sub: 'sub' };
 function dropTarget(x, y) {
   const under = document.elementFromPoint(x, y);
   const zone = under?.closest('[data-zone]');
   if (!zone) return null;
-  const [kind, loc] = zone.dataset.zone.split(':');
-  const onto = under.closest('.sd-chip[data-pid]');
+  let [kind, loc] = zone.dataset.zone.split(':');
+  if (zone.dataset.folded) kind = FOLDED_ZONE[drag.kind];
+  let onto = null, slot = null;
+  if (kind === 'people' && drag.kind === 'equip' && !zone.dataset.folded) onto = chipAt(zone, y);
+  if (kind === 'people' && drag.kind === 'person' && !zone.dataset.folded && loc !== 'POOL' && loc !== 'VACATION') slot = slotAt(zone, y);
   const ok = (drag.kind === 'person' && kind === 'people')
     || (drag.kind === 'equip' && kind === 'equip')
     || (drag.kind === 'hauler' && kind === 'haul')
     || (drag.kind === 'sub' && kind === 'sub')
     || (drag.kind === 'equip' && kind === 'people' && isJob(loc) && onto);
-  return ok ? { zone, kind, loc, onto } : null;
+  return ok ? { zone, kind, loc, onto, slot } : null;
 }
 function endDrag() {
   window.removeEventListener('pointermove', moveDrag);
@@ -703,13 +764,14 @@ function endDrag() {
   const t = d.target;
   if (!t) return;
   const ontoPid = t.onto && t.onto.dataset.pid !== d.id ? t.onto.dataset.pid : null;
-  if (d.kind === 'person') movePerson(d.id, t.loc, ontoPid);
+  if (d.kind === 'person') movePerson(d.id, t.loc, t.slot?.before?.dataset.pid || null);
   else if (d.kind === 'hauler') editHaul(t.loc, null, d.id);
   else if (d.kind === 'sub') editSub(t.loc, null, d.id);
   else if (t.kind === 'equip') moveEquip(d.id, t.loc);
   else moveEquip(d.id, t.loc, ontoPid);
 }
 function clearOver() {
+  hideSlot();
   $$('.over').forEach((z) => z.classList.remove('over'));
   $$('.drop-on').forEach((z) => z.classList.remove('drop-on'));
 }
@@ -720,6 +782,7 @@ function applySearch(scroll) {
     el.classList.remove('dim', 'hit');
     if (q) el.classList.add(el.textContent.toLowerCase().includes(q) ? 'hit' : 'dim');
   });
+  $$('.sd-job.mini').forEach((el) => el.classList.toggle('hit', !!q && el.dataset.find.toLowerCase().includes(q)));
   if (q && scroll) $('.sd-main .hit')?.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
 
