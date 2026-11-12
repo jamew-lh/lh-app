@@ -17,7 +17,8 @@ body.sched-on { font-size: 15px; }
 .sd-date { display: flex; flex-direction: column; align-items: center; cursor: pointer; min-width: 230px; }
 .sd-date b { color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 22px; letter-spacing: .02em; }
 .sd-date input { border: 0; background: transparent; color: #CFE2DE; font-size: 13px; padding: 0; min-height: 0; text-align: center; }
-#sdQ { width: 260px; min-height: 40px; padding: 8px 12px; font-size: 15px; border-radius: 8px; border: 0; }
+#sdQ { width: 260px; min-height: 40px; padding: 8px 12px; font-size: 15px; border-radius: 8px; border: 0; background: #fff; color: var(--ink); }
+#sdQ::placeholder { color: var(--muted); }
 .sd-save { font-size: 13px; color: #CFE2DE; }
 .sd-save.bad { color: #fff; background: var(--bad); border-radius: 6px; padding: 3px 8px; }
 .sd-tools .spacer { flex: 1; }
@@ -60,8 +61,9 @@ body.sched-on { font-size: 15px; }
 .sd-warn { font-size: 12.5px; border-radius: 6px; padding: 2px 7px; background: #FEF3C7; color: #92400E; }
 .sd-warn.red { background: var(--bad-soft); color: var(--bad); }
 .sd-zl { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 6px 10px 2px; }
-.sd-zone { min-height: 36px; padding: 3px 8px 8px; display: flex; flex-direction: column; gap: 4px; border-radius: 8px; transition: background .1s; }
-.sd-zone.eq { flex-direction: row; flex-wrap: wrap; }
+.sd-zone { min-height: 36px; padding: 3px 8px 8px; display: flex; flex-direction: column; gap: 8px; border-radius: 8px; transition: background .1s; }
+.sd-zone.eq { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+.sd-zone.haul { gap: 4px; }
 .sd-zone.over { background: #E6F2EF; outline: 2px dashed var(--green-2); outline-offset: -3px; }
 .sd-empty { color: #A9B3B0; font-size: 13px; font-style: italic; padding: 4px 2px; }
 
@@ -92,6 +94,18 @@ body.sched-on { font-size: 15px; }
 .hit { box-shadow: 0 0 0 3px var(--tan); }
 .dragging { opacity: .35; }
 .drop-on { box-shadow: 0 0 0 2px var(--green-2); }
+/* Where a dragged person will land: a green line between two names. */
+.sd-insline { position: fixed; z-index: 99; height: 3px; margin-top: -1.5px; background: var(--green); border-radius: 2px; pointer-events: none; box-shadow: 0 0 0 2px rgba(255,255,255,.9); }
+.sd-insline::before, .sd-insline::after { content: ''; position: absolute; top: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+.sd-insline::before { left: -4px; }
+.sd-insline::after { right: -4px; }
+
+/* Job with nobody on the crew, folded down to one line. Still takes drops. */
+.sd-job.mini { cursor: pointer; border-top-color: #A9B3B0; }
+.sd-job.mini .sd-job-h { border-bottom: 0; }
+.sd-job.mini .r1 b { color: var(--muted); }
+.sd-job .sd-fold { border: 0; background: none; color: var(--muted); font-size: 14px; cursor: pointer; padding: 0 2px; }
+.sd-job.mini.over { background: #E6F2EF; outline: 2px dashed var(--green-2); outline-offset: -3px; }
 .sd-ghost { position: fixed; z-index: 100; pointer-events: none; opacity: .92; box-shadow: 0 10px 24px rgba(0,48,46,.25); transform: rotate(-1.5deg); }
 body.sd-dragging, body.sd-dragging * { cursor: grabbing !important; }
 .sd-mrow { display: flex; gap: 4px; align-items: stretch; margin-bottom: 4px; }
