@@ -38,6 +38,14 @@ function addWorkdays(s, n) {
 // Saturdays (and Sundays) start with empty crews. Weekdays copy from the last weekday (the server skips weekends).
 const isWeekend = (s) => [0, 6].includes(toD(s).getUTCDay());
 const nextSaturday = (s) => { const d = toD(s); d.setUTCDate(d.getUTCDate() + ((6 - d.getUTCDay() + 7) % 7 || 7)); return iso(d); };
+// The "Sat" button: Monday goes back to the Saturday just before it; Tuesday–Friday go ahead to the coming one.
+// Weekends have no button (▶ already goes to Monday). Only navigation — copying rules don't change.
+const satJump = (s) => {
+  const day = toD(s).getUTCDay();
+  if (day === 0 || day === 6) return null;
+  if (day === 1) { const d = toD(s); d.setUTCDate(d.getUTCDate() - 2); return { date: iso(d), back: true }; }
+  return { date: nextSaturday(s), back: false };
+};
 const todayNY = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date());
 const short = (s) => toD(s).toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
 const md = (s) => toD(s).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', timeZone: 'UTC' });
@@ -352,7 +360,7 @@ function render(first = false) {
       <button class="sd-btn" data-day="-1" title="Previous workday" aria-label="Previous workday">◀</button>
       <label class="sd-date"><b>${esc(longDate(S.date))}</b><input type="date" id="sdDate" value="${S.date}"></label>
       <button class="sd-btn" data-day="1" title="Next workday" aria-label="Next workday">▶</button>
-      ${isWeekend(S.date) ? '' : `<button class="sd-btn" id="sdSat" title="Go to ${esc(short(nextSaturday(S.date)))}">Sat</button>`}
+      ${(() => { const j = satJump(S.date); return j ? `<button class="sd-btn" id="sdSat" data-date="${j.date}" title="Go ${j.back ? 'back ' : ''}to ${esc(short(j.date))}">${j.back ? '◀ Sat' : 'Sat'}</button>` : ''; })()}
     </div>
     <input type="search" id="sdQ" placeholder="Find a person or machine…" value="${esc(query)}">
     <span id="sdSave" class="sd-save">${esc(savedText())}</span>
@@ -656,7 +664,7 @@ function wire() {
   $$('[data-mdn]').forEach((el) => el.addEventListener('click', () => swapMoves(+el.dataset.mdn, +el.dataset.mdn + 1)));
   $$('[data-day]').forEach((el) => el.addEventListener('click', () => goDate(addWorkdays(S.date, Number(el.dataset.day)))));
   $('#sdDate').addEventListener('change', (e) => goDate(e.target.value));
-  $('#sdSat')?.addEventListener('click', () => goDate(nextSaturday(S.date)));
+  $('#sdSat')?.addEventListener('click', (e) => goDate(e.currentTarget.dataset.date));
   $('#sdQ').addEventListener('input', (e) => { query = e.target.value; applySearch(true); });
   $('#sdAddJob').addEventListener('change', (e) => {
     const id = e.target.value;
