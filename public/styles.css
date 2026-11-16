@@ -464,3 +464,9 @@ details.linklist[open] { border-color: var(--green); }
 .dv-chip b { margin-left: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--tan); }
 .dv-chip[aria-pressed=true] b { color: #fff; }
 .dv-chip.dv-empty { border-style: dashed; }
+
+.card.base h3 .dot { background: var(--tan-soft); color: var(--green); }
+.card .body.mono { font-variant-numeric: tabular-nums; }
+.ulinks .btn:not(.call) { width: 100%; justify-content: flex-start; background: var(--ground); color: var(--green); }
+.ulinks .btn:not(.call) span { flex: 1; display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.ulinks .btn:not(.call) small { font-weight: 500; color: var(--muted); white-space: nowrap; }

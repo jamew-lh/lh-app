@@ -132,6 +132,22 @@ test('Equipment Viewer: named people outside the listed positions (Jared Edwards
   assert.equal(canSeeEquipment({ id: 'recSOMEONEELSE0001', position: 'Driver' }), false);
 });
 
+test('GPS base coordinates: shown as entered, with decimal lat/lon for directions', async () => {
+  const { parseBases, dmsToDecimal } = await import('../lib/jobs.mjs');
+  const { cookie } = await login('Rivera', '4321');
+  const sad = (await call('GET', '/api/jobs', { cookie })).data.jobs.find((j) => j.name === 'Sadsbury');
+  assert.match(sad.baseCoords, /B-3 \(Post\)/);
+  assert.deepEqual(sad.bases, [{ name: 'B-3 (Post)', lat: 39.9779709, lon: -75.9292362, height: "595.08'" }]);
+  // two bases, curly quotes, a typo'd latitude (N90°) gets no directions
+  const two = parseBases('B-1 (Office)\nLAT – N90° 09\'28.34388"\nLON- W75° 29\'02.53817"\nHGT- 162.99\'\n\nBase (Post)\nLAT - N40° 09’28.02007”\nLON- W75°047\'25.80880"\nHGT- 154.51');
+  assert.equal(two.length, 2);
+  assert.equal(two[0].lat, null);
+  assert.equal(two[1].name, 'Base (Post)');
+  assert.ok(Math.abs(two[1].lat - 40.1577834) < 1e-6);
+  assert.ok(Math.abs(two[1].lon - -75.7905024) < 1e-6);
+  assert.equal(dmsToDecimal('nothing here'), null);
+});
+
 test('too many wrong tries locks the name for a while', async () => {
   for (let i = 0; i < 6; i++) await login('Rivera', '0000');
   assert.equal((await login('Rivera', '4321')).status, 429);

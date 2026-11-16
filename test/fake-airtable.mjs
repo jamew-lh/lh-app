@@ -73,6 +73,7 @@ export const JOB_RECORDS = [
     [J.f.fire]: 'Sadsbury Fire Co\n24 1st Ave\nCoatesville, PA 19320\n610-857-9332\n',
     [J.f.township]: 'Sadsbury Township\n2920 Lincoln HWY\nSadsburyville, PA 19369\n610-857-9503\n',
     [J.f.toilet]: 'Port A Bowl',
+    [J.f.baseCoords]: 'B-3 (Post)\nLAT – N39° 58\'40.69522"\nLON- W75° 55\'45.25016"\nHGT- 595.08\'\n',
     [J.f.utilities]: 'PECO Gas Emergency: 800-841-4141\nPECO Electric: 800-841-4141\nAqua Water - 877-987-2782\nCOMCAST | 1-800-934-6489',
     [J.f.codes]: [{ id: 'att1', url: 'https://example.com/codes.pdf', filename: 'Sadsbury codes.pdf' }],
   }),
