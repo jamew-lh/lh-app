@@ -1,6 +1,7 @@
 // Lyons & Hohl landing app.
 import { initIncidents, showIncidents, showIncidentForm, showIncident } from './incident.js';
 import { initSchedule, showSchedule, flushSchedule } from './schedule.js';
+import { dayHtml, stackCards } from './schedule-view.js';
 // ---------------------------------------------------------------------------
 // LINKS — edit these to change where the buttons go.
 // ---------------------------------------------------------------------------
@@ -253,6 +254,9 @@ function showHome() {
       ${me.schedule ? `<div class="section-title">Dispatch</div>
       <div class="tiles">
         ${tile({ go: 'schedule', icon: 'jobs', title: 'Daily Schedule', sub: 'Crews, equipment and trucks by job', cls: 'office wide' })}
+      </div>` : me.scheduleView ? `<div class="section-title">Dispatch</div>
+      <div class="tiles">
+        ${tile({ go: 'day-view', icon: 'jobs', title: 'Daily Schedule', sub: 'Posted crews, equipment and trucks: past, today and next', cls: 'office wide' })}
       </div>` : ''}
       ${me.calendarUrl ? `<div class="section-title">Management</div>
       <div class="tiles">
@@ -586,6 +590,43 @@ async function showPhones() {
 initIncidents({ app, api, esc, I, bar, footer, me: () => me, loadJobs });
 initSchedule({ app, api, esc, I, me: () => me, LINKS });
 
+// ---- Daily Schedule, read-only (published days only, no personal notes) ----
+const byId = (list) => Object.fromEntries((list || []).map((x) => [x.id, x]));
+let viewResize = null;
+async function showDayView(date) {
+  document.title = 'Daily Schedule · Lyons & Hohl';
+  app.innerHTML = `${subBar('Daily Schedule')}
+    <main><div class="wrap dv-wrap">
+      <div class="dv-days" id="dvDays"><div class="loading">Loading…</div></div>
+      <div id="dvDay"></div>
+    </div></main>${footer()}`;
+  let list;
+  try { list = await api('schedule/view-days'); }
+  catch (e) { if (e.message !== 'signed-out') $('#dvDays').innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  const pick = list.days.find((d) => d.date === date) ? date : list.today;
+  $('#dvDays').innerHTML = list.days.map((d) => `<button class="chip dv-chip${d.posted ? '' : ' dv-empty'}" data-go="day-view/${d.date}" aria-pressed="${d.date === pick}">
+      ${esc(d.label)}${d.today ? ' <b>Today</b>' : ''}</button>`).join('');
+  const box = $('#dvDay');
+  box.innerHTML = '<div class="loading">Loading…</div>';
+  let data;
+  try { data = await api(`schedule/view?date=${pick}`); }
+  catch (e) { if (e.message !== 'signed-out') box.innerHTML = `<div class="err">${esc(e.message)}</div>`; return; }
+  if (!data.posted) {
+    box.innerHTML = '<div class="v-msg"><h2>Not posted yet</h2><p>The office hasn’t published this day’s schedule yet. Check back later or tap refresh.</p></div>';
+    return;
+  }
+  const updated = data.updatedAt ? new Date(data.updatedAt).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+  box.innerHTML = dayHtml({
+    date: data.date, board: data.board, people: byId(data.people), jobs: byId(data.jobs),
+    equipment: byId(data.equipment), haulers: byId(data.haulers), subs: byId(data.subs), vacation: data.vacation, eqMoves: data.eqMoves,
+  }, 'share') + (updated ? `<p class="v-foot">Updated ${esc(updated)}</p>` : '');
+  const stack = () => stackCards(box.querySelector('.v-grid'), 280, 12);
+  stack();
+  if (viewResize) window.removeEventListener('resize', viewResize);
+  let t; viewResize = () => { clearTimeout(t); t = setTimeout(stack, 150); };
+  window.addEventListener('resize', viewResize);
+}
+
 // ------------------------------- Router ------------------------------------
 function route() {
   if (!me) return showLogin();
@@ -594,6 +635,7 @@ function route() {
   document.body.classList.toggle('sched-on', sched);
   if (sched) return showSchedule(h.split('/')[1]);
   flushSchedule();   // save any change still waiting when leaving the schedule
+  if (h === 'day-view' || h.startsWith('day-view/')) return showDayView(h.split('/')[1] || '');
   if (h === 'jobs') return showJobs();
   if (h.startsWith('job/')) return showJob(h.slice(4));
   if (h === 'phones') return showPhones();

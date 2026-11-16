@@ -455,3 +455,12 @@ details.linklist[open] { border-color: var(--green); }
 .vendor .main { flex: 1; min-width: 0; }
 .vendor .title { font-weight: 700; font-size: 17px; }
 .vendor .sub { color: var(--muted); font-size: 14px; margin-top: 1px; }
+
+/* Daily Schedule, read-only */
+.dv-wrap { max-width: 1100px; }
+.dv-days { display: flex; gap: 8px; overflow-x: auto; padding: 14px 0 6px; scrollbar-width: none; }
+.dv-days::-webkit-scrollbar { display: none; }
+.dv-chip { flex: none; min-height: 44px; }
+.dv-chip b { margin-left: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--tan); }
+.dv-chip[aria-pressed=true] b { color: #fff; }
+.dv-chip.dv-empty { border-style: dashed; }

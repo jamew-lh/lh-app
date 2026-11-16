@@ -248,3 +248,61 @@ test('subcontractors: saved with the day, listed under hired trucks on the email
   assert.match(html, /Valley Paving · Binder course, start 7:00/);
   assert.match(dayText(d), /Sub: Valley Paving · Binder course, start 7:00/);
 });
+
+// ---------------------------------------------------------------- read-only view
+import { viewDays, viewDay } from '../lib/schedule.mjs';
+
+async function saveAndMaybePublish(cookie, date, publish, extra = {}) {
+  const s = await call('PUT', `/api/schedule/day?date=${date}`, { cookie, body: { board: board(extra), version: 0 } });
+  assert.equal(s.status, 200, JSON.stringify(s.data));
+  if (publish) assert.equal((await call('POST', `/api/schedule/publish?date=${date}`, { cookie, body: {} })).status, 200);
+}
+const asViewer = (position, id = 'recEMP0000000003') => ({ id, position });
+
+test('read-only view: who can see it', async () => {
+  assert.equal((await login('Baker', '5555')).person.scheduleView, true);   // Foreman
+  assert.equal((await login('Chen', '2468')).person.scheduleView, true);    // Superviser
+  assert.equal((await login('Walker', '1234')).person.scheduleView, true);  // Office
+  assert.equal((await login('Boss', '3333')).person.scheduleView, true);    // Management
+  const op = await login('Rivera', '4321');
+  assert.equal(op.person.scheduleView, false);                              // Operator
+  assert.equal((await call('GET', '/api/schedule/view-days', { cookie: op.cookie })).status, 403);
+});
+
+test('read-only view: 2 posted days back (keeps Saturday), today, next 2 posted days; drafts hidden', async () => {
+  const { cookie } = await editor();
+  // Today = Monday 11/16. Posted: Thu 11/12, Fri 11/13, Sat 11/14, Tue 11/17, Wed 11/18, Thu 11/19. Draft only: Mon 11/16.
+  for (const d of ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-17', '2026-11-18', '2026-11-19']) await saveAndMaybePublish(cookie, d, true);
+  await saveAndMaybePublish(cookie, '2026-11-16', false);
+  const mon = new Date('2026-11-16T14:00:00Z');
+  const r = await viewDays(asViewer('Foreman'), env, f, mon);
+  assert.deepEqual(r.days.map((d) => [d.date, d.posted]), [
+    ['2026-11-13', true], ['2026-11-14', true], ['2026-11-16', false], ['2026-11-17', true], ['2026-11-18', true],
+  ]);
+  assert.equal(r.days[2].today, true);
+  assert.deepEqual(await viewDay('2026-11-16', asViewer('Foreman'), env, f, mon), { date: '2026-11-16', posted: false }); // draft stays hidden
+  await assert.rejects(viewDay('2026-11-12', asViewer('Foreman'), env, f, mon), /isn’t available/);                 // outside the window
+});
+
+test('read-only view: on a Friday the next days are Saturday and Monday', async () => {
+  const { cookie } = await editor();
+  for (const d of ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-16']) await saveAndMaybePublish(cookie, d, true);
+  const fri = new Date('2026-11-13T14:00:00Z');
+  const r = await viewDays(asViewer('Superviser'), env, f, fri);
+  assert.deepEqual(r.days.map((d) => d.date), ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-16']);
+});
+
+test('read-only view: personal notes are left off; job notes stay', async () => {
+  const { cookie } = await editor();
+  const extra = {
+    people: { recJOB0000000006: [{ id: 'recEMP0000000003', role: 'Foreman', note: 'Dentist at 2' }, { id: 'recEMP0000000002', role: 'Operator', machine: 'recEQP0000000001' }], OFF: [], SHOP: [], DRIVERS: [] },
+    jobNotes: { recJOB0000000006: 'Start at 6:30' },
+  };
+  await saveAndMaybePublish(cookie, '2026-11-16', true, extra);
+  const d = await viewDay('2026-11-16', asViewer('Office', 'recEMP0000000001'), env, f, new Date('2026-11-16T14:00:00Z'));
+  assert.equal(d.posted, true);
+  assert.ok(!JSON.stringify(d).includes('Dentist'));
+  assert.equal(d.board.jobNotes.recJOB0000000006, 'Start at 6:30');
+  assert.equal(d.board.sent, undefined);
+  assert.ok(!JSON.stringify(d).includes('555-'));   // no phone numbers
+});
