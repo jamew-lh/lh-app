@@ -307,7 +307,7 @@ function showJobs() {
   const draw = (jobs) => {
     const q = jobQuery.toLowerCase().trim();
     const list = jobs.filter((j) => (jobFilter === 'all' || j.active)
-      && (!q || [j.name, j.number, j.supervisor, j.address, j.township, j.utilities].join(' ').toLowerCase().includes(q)));
+      && (!q || [j.name, j.number, j.supervisor, j.address, j.township, j.utilities, j.baseCoords].join(' ').toLowerCase().includes(q)));
     $('#count').textContent = `${list.length} job${list.length === 1 ? '' : 's'}`;
     if (!list.length) { $('#jobList').innerHTML = '<div class="empty">No jobs match that search.</div>'; return; }
     let html = ''; let year = null; let open = false;
@@ -356,6 +356,16 @@ function infoCard(cls, icon, title, text, { place = true } = {}) {
     <div class="body">${esc(text)}</div>${links ? `<div class="links">${links}</div>` : ''}</section>`;
 }
 
+// GPS base points (BASE CORD field): the text as entered, plus a Directions button per base we can read.
+function baseCard(j) {
+  const title = 'GPS Base Coordinates';
+  if (!j.baseCoords) return `<section class="card base"><h3><span class="dot">${I.gps}</span>${title}</h3><div class="body none">Not entered yet</div></section>`;
+  const buttons = (j.bases || []).filter((b) => b.lat != null && b.lon != null)
+    .map((b) => `<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${b.lat},${b.lon}" target="_blank" rel="noopener">${I.nav}<span>Directions to ${esc(b.name)}<small>${b.lat.toFixed(5)}, ${b.lon.toFixed(5)}</small></span></a>`);
+  return `<section class="card base"><h3><span class="dot">${I.gps}</span>${title}</h3>
+    <div class="body mono">${esc(j.baseCoords)}</div>${buttons.length ? `<div class="links ulinks">${buttons.join('')}</div>` : ''}</section>`;
+}
+
 // Utility Emergency Contacts: one call button per number, named from its line
 // ("PECO Gas: 800-841-4141" -> "Call PECO Gas").
 function utilityCard(text) {
@@ -394,6 +404,7 @@ async function showJob(id) {
       ${infoCard('hospital', 'plus', 'Nearest Hospital', j.hospital)}
       ${infoCard('police', 'badge', 'Nearest Police Dept', j.police)}
       ${infoCard('fire', 'flame', 'Nearest Fire Dept', j.fire)}
+      ${baseCard(j)}
       ${utilityCard(j.utilities)}
       ${infoCard('', 'town', 'Township', j.township)}
       ${j.toilet ? infoCard('', 'toilet', 'Portable Toilet', j.toilet, { place: false }) : ''}
