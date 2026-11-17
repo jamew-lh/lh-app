@@ -43,14 +43,14 @@ test('named exception (Tyler Enck, Paving) can sign in', async () => {
   const r = await login('Enck', '8642');
   assert.equal(r.status, 200);
   assert.equal(r.data.person.name, 'Tyler L. Enck');
-  assert.equal(r.data.person.equipment, true);   // Shop
+  assert.equal(r.data.person.equipment, true);   // View Only
 });
 
 test('several people with the same last name each sign in with their own PIN', async () => {
   assert.equal((await login('Smoker', '1111')).data.person.name, 'Gage Smoker');
   const chad = (await login('Smoker', '2222')).data.person;
   assert.equal(chad.name, 'Chad M. Smoker');
-  assert.equal(chad.equipment, true);  // Shop
+  assert.equal(chad.equipment, true);  // View Only
   assert.equal(chad.pm, true);         // Shop
   assert.equal((await login('Walker', '1234')).data.person.pm, false);
 });
@@ -124,12 +124,37 @@ test('Material Orders: only people with MATERIAL ACCESS checked', async () => {
   assert.equal((await login('Rivera', '4321')).data.person.material, false);
 });
 
-test('Equipment Viewer: named people outside the listed positions (Jared Edwards)', async () => {
-  const { EMPLOYEES } = await import('../lib/config.mjs');
-  const { canSeeEquipment } = await import('../lib/store.mjs');
-  assert.ok(EMPLOYEES.equipmentPeople.includes('recfbG45qMZzjBzT0'));
-  assert.equal(canSeeEquipment({ id: 'recfbG45qMZzjBzT0', position: 'Driver' }), true);
-  assert.equal(canSeeEquipment({ id: 'recSOMEONEELSE0001', position: 'Driver' }), false);
+test('Equipment Tracker button: sends people to the equipment app with a signed pass at their level', async () => {
+  const { createHmac } = await import('node:crypto');
+  const go = async (cookie) => handle(new Request(BASE + '/api/go/equipment', { headers: cookie ? { cookie } : {} }), { env, fetchImpl: fakeFetch() });
+  const passOf = (res) => {
+    const t = new URL(res.headers.get('location')).searchParams.get('t');
+    const [payload, sig] = t.split('.');
+    assert.equal(sig, createHmac('sha256', env.LH_HANDOFF_SECRET).update(`lh-equip.${payload}`).digest('base64url'));
+    return JSON.parse(Buffer.from(payload, 'base64url').toString());
+  };
+  env.LH_HANDOFF_SECRET = 'h'.repeat(40);
+  try {
+    const drv = await go((await login('Rivera', '4321')).cookie);
+    assert.equal(drv.status, 302);
+    assert.match(drv.headers.get('location'), /^https:\/\/lh-equipment\.netlify\.app\/api\/sso\?t=/);
+    const p = passOf(drv);
+    assert.deepEqual([p.i, p.n, p.r, p.k], ['recEMP0000000002', 'Tony R.', 'd', 'Tony R.']);
+    assert.ok(p.e > Date.now() && p.e <= Date.now() + 120e3);
+    // Full Edit, no Schedule Name: "First Last", driver key "First L."
+    const full = passOf(await go((await login('Walker', '1234')).cookie));
+    assert.deepEqual([full.n, full.r, full.k], ['James Walker', 'o', 'James W.']);
+    assert.equal(passOf(await go((await login('Baker', '5555')).cookie)).r, 'v');
+    // no access, or not signed in: a short page, no pass
+    const none = await go((await login('Chen', '2468')).cookie);
+    assert.equal(none.status, 403);
+    assert.match(await none.text(), /don't have access/);
+    assert.equal((await go()).status, 401);
+  } finally { delete env.LH_HANDOFF_SECRET; }
+  // not set up in Netlify yet
+  const unset = await go((await login('Walker', '1234')).cookie);
+  assert.equal(unset.status, 500);
+  assert.match(await unset.text(), /LH_HANDOFF_SECRET/);
 });
 
 test('GPS base coordinates: shown as entered, with decimal lat/lon for directions', async () => {
@@ -153,11 +178,12 @@ test('too many wrong tries locks the name for a while', async () => {
   assert.equal((await login('Rivera', '4321')).status, 429);
 });
 
-test('equipment viewer only for Management, Office, Supervisor, Foreman', async () => {
-  assert.equal((await login('Walker', '1234')).data.person.equipment, true);   // Office
-  assert.equal((await login('Baker', '5555')).data.person.equipment, true);    // Foreman
-  assert.equal((await login('Chen', '2468')).data.person.equipment, true);     // "Superviser"
-  assert.equal((await login('Rivera', '4321')).data.person.equipment, false);  // Operator
+test('Equipment Tracker button only for people with the Equipment Tracker field filled in', async () => {
+  assert.equal((await login('Walker', '1234')).data.person.equipment, true);   // Full Edit
+  assert.equal((await login('Baker', '5555')).data.person.equipment, true);    // View Only
+  assert.equal((await login('Rivera', '4321')).data.person.equipment, true);   // Driver User
+  assert.equal((await login('Chen', '2468')).data.person.equipment, false);    // Superviser, field empty
+  assert.equal((await login('Boss', '3333')).data.person.equipment, false);    // Management, field empty
 });
 
 test('data needs a sign-in', async () => {

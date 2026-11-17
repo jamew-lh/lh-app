@@ -30,6 +30,15 @@ Tools on James's Mac (Apple silicon, no Homebrew):
   (`Walker`/`1234` office, `Rivera`/`4321` operator, `Woodard`/`6060` schedule editor; all made-up data).
 - Airtable IDs (not names) live in `lib/config.mjs`. Secrets (Airtable token, TextMagic keys, session secret) live only in Netlify.
 
+## Equipment Tracker button (Nov 2026)
+
+- Shown only to people whose **Equipment Tracker** field (Employee List, single select) is filled in:
+  View Only / Driver User / Full Edit. No position rule (James, Nov 17 2026). `EQUIPMENT_APP` in `lib/config.mjs`.
+- The button goes to `/api/go/equipment`, which redirects to `https://lh-equipment.netlify.app/api/sso?t=<pass>`.
+  The pass (`lib/equipment-pass.mjs`) carries record id, name (Schedule Name, else "First Last"), level `v|d|o`
+  and driver name, expires in 2 minutes, and is signed with `LH_HANDOFF_SECRET` (same value on both Netlify sites).
+  The equipment app (`jamew-lh/equipment-viewer`) checks it; Driver User can mark done only moves where they're the driver.
+
 ## Daily Schedule (built Nov 2026, branch `feature/daily-schedule`)
 
 Replaces the Excel daily crew sheet (OneDrive → Dispatch - Documents → General → Daily Crew Sheets).

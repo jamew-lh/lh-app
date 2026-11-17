@@ -11,7 +11,7 @@ const LINKS = {
   costCodes: 'https://static1.squarespace.com/static/60084d0846d4c56a53f84f46/t/6411915e37a7cf1d94167817/1678872926395/STANDARD+SITE+COST+CODES.pdf',
   shoring: 'https://static1.squarespace.com/static/60084d0846d4c56a53f84f46/t/65d74c5e6738b00cffe11b26/1708608609311/All+Shields+-+tab+data.pdf',
   jobsiteBases: 'https://www.lyonshohl.com/s/__Jobsite-bases_10-08-26.pdf',
-  equipment: 'https://lh-equipment.netlify.app/',
+  equipment: '/api/go/equipment', // signs them in to the equipment app at their Equipment Tracker level
   pmService: 'https://lh-service.netlify.app/',
   // Material Orders app (shown to people with MATERIAL ACCESS checked). Button stays hidden while this is blank.
   materialOrders: 'https://lh-material-purchasing.netlify.app/',
@@ -268,7 +268,7 @@ function showHome() {
       </div>` : ''}
       ${me.equipment || (me.pm && LINKS.pmService) ? `<div class="section-title">Equipment</div>
       <div class="tiles">
-        ${me.equipment ? tile({ href: LINKS.equipment, icon: 'dozer', title: 'Equipment Viewer', sub: 'Where every machine is', cls: 'office wide', external: true }) : ''}
+        ${me.equipment ? tile({ href: LINKS.equipment, icon: 'dozer', title: 'Equipment Tracker', sub: 'Where every machine is, and moves', cls: 'office wide', external: true }) : ''}
         ${me.pm && LINKS.pmService ? tile({ href: LINKS.pmService, icon: 'wrench', title: 'PM Service', sub: 'Log and look up machine services', cls: 'office wide', external: true }) : ''}
       </div>` : ''}
     </div></main>

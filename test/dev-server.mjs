@@ -11,7 +11,7 @@ addScheduleCrew();
 
 const root = fileURLToPath(new URL('../public/', import.meta.url));
 // TextMagic values are placeholders: fakeFetch catches every text, nothing is really sent.
-const env = { AIRTABLE_TOKEN: 'patFAKE', SESSION_SECRET: 'local-preview-secret-0123456789', TEXTMAGIC_USERNAME: 'preview', TEXTMAGIC_API_KEY: 'preview' };
+const env = { AIRTABLE_TOKEN: 'patFAKE', SESSION_SECRET: 'local-preview-secret-0123456789', LH_HANDOFF_SECRET: 'dev-handoff-dev-handoff-dev-handoff', TEXTMAGIC_USERNAME: 'preview', TEXTMAGIC_API_KEY: 'preview' };
 const fetchImpl = fakeFetch();
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 const port = Number(process.env.PORT || 8899);
