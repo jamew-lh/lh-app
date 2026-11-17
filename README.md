@@ -8,7 +8,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 
 - Sign in: **last name + Timecard Pin** (the same PIN as the timecard app)
 - Who can sign in: every **Current Employee** whose Location is **SIte Contractors** and who has a Timecard Pin, plus anyone listed in `extraPeople` in `lib/config.mjs` (currently Tyler Enck)
-- **Equipment Viewer** button: positions Management, Office, Superviser / SUP, Foreman and Shop, plus anyone in `equipmentPeople` in `lib/config.mjs` (Jared Edwards)
+- **Equipment Tracker** button: only people with the **Equipment Tracker** field filled in (Employee List: View Only, Driver User or Full Edit). Tapping it signs them in to the equipment app at that level, no second PIN (needs `LH_HANDOFF_SECRET` in Netlify, the same value on the equipment site)
 - **PM Service** button: only for position Shop
 - **Vacation Calendar** button: only for position Management (see step 3)
 - **Employee details in the phone list** (start date, driving list, medical card + expiration, license endorsements, home address): only Management and Superviser / SUP. Tap a name to open them. Other people's phones never receive this information.
@@ -50,6 +50,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 |---|---|
 | `AIRTABLE_TOKEN` | the token from step 1 |
 | `SESSION_SECRET` | any long random text, at least 24 characters (use a password generator) |
+| `LH_HANDOFF_SECRET` | long random text (40+ letters and numbers). **Same value on the equipment site** (lh-equipment). Lets the Equipment Tracker button sign people in there |
 | `TEXTMAGIC_USERNAME` | same as the timecard app: your TextMagic username (for incident report texts) |
 | `TEXTMAGIC_API_KEY` | same as the timecard app (TextMagic → Settings → API) |
 | `VACATION_CALENDAR_URL` | the vacation calendar share link from the timecard app (office page → **Vacation calendar** → **Share link** → **Copy**). Optional: without it, the button doesn't show. |
@@ -80,7 +81,7 @@ It opens full-screen with the L&H icon.
 - **Buttons and links** (cost codes, shoring, jobsite bases, timecard, social
   pages): edit the `LINKS` list at the top of `public/app.js`. When you upload a
   new Jobsite Bases PDF with a new file name, update `jobsiteBases` there.
-- **Who sees Equipment Viewer:** `equipmentPositions` in `lib/config.mjs`.
+- **Who sees Equipment Tracker:** the Equipment Tracker field in the Employee List (`EQUIPMENT_APP` in `lib/config.mjs`).
 - **Job order:** newest year first; inside a year, highest last-three-digits first,
   then that year's `000 X__` jobs. Rows whose Number isn't a number (VACATION,
   SHOP TIME, ABSENT, …) are hidden. See `lib/jobs.mjs`.

@@ -55,6 +55,12 @@ export function addScheduleCrew() {
 EMPLOYEE_RECORDS.find((r) => r.id === 'recu5oe4hLAB7KXLJ').fields[P.getsLink] = true;
 // Schedule editors (the "Schedule Editor" checkbox): James Woodard and Bob Arment.
 for (const id of ['recu5oe4hLAB7KXLJ', 'recIwytS3JrkBVb12']) EMPLOYEE_RECORDS.find((r) => r.id === id).fields[E.f.scheduleEditor] = true;
+// Equipment Tracker access (the single select in the Employee List). Chen (a Superviser) has none on purpose:
+// only the field decides, not the position.
+for (const [id, level] of [['recEMP0000000001', 'Full Edit'], ['recu5oe4hLAB7KXLJ', 'Full Edit'], ['recIwytS3JrkBVb12', 'Full Edit'],
+  ['recEMP0000000002', 'Driver User'], ['recEMP0000000003', 'View Only'], ['recEMP0000000010', 'View Only'], ['recbAiVcHKoqqVXYZ', 'View Only']]) {
+  EMPLOYEE_RECORDS.find((r) => r.id === id).fields[E.f.equipmentAccess] = { name: level };
+}
 
 const job = (id, name, number, extra = {}) => ({ id, fields: { [J.f.name]: name, [J.f.number]: number, [J.f.active]: true, ...extra } });
 

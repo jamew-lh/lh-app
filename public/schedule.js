@@ -332,7 +332,7 @@ function topBar() {
     ['Home', '#', false],
     ['Timecard', L.timecard, true],
     ['Vacation Requests', L.vacation, true],
-    me.equipment && ['Equipment Viewer', L.equipment, true],
+    me.equipment && ['Equipment Tracker', L.equipment, true],
     me.pm && L.pmService && ['PM Service', L.pmService, true],
     me.calendarUrl && ['Vacation Calendar', me.calendarUrl, true],
   ].filter(Boolean);
