@@ -213,10 +213,10 @@ body.shared-day .wrap { max-width: 1100px; }
 }
 
 /* ---------- one-page PDF (Publish → One-page PDF): a Letter page, portrait, 0.4in margins ---------- */
-/* Fixed page box; schedule.js shrinks .o-fit's font size until it fits. Measured off screen, then printed. */
-.v-one { width: 7.7in; height: 10.2in; overflow: hidden; background: #fff; color: #17201F; font-family: Arial, Helvetica, sans-serif; }
-.v-one.measure { position: fixed; left: -10000px; top: 0; visibility: hidden; }
-.v-one .o-fit { font-size: 10pt; line-height: 1.22; }
+/* Fixed page box (a little under the 10.2in printable height); schedule.js shrinks the text, then scales .o-fit, until it fits. */
+.v-one { width: 7.7in; height: 10in; overflow: hidden; break-inside: avoid; page-break-inside: avoid; background: #fff; color: #17201F; font-family: Arial, Helvetica, sans-serif; }
+.sd-print.measure { display: block; position: fixed; left: -10000px; top: 0; visibility: hidden; }
+.v-one .o-fit { font-size: 10pt; line-height: 1.22; transform-origin: top left; }
 .v-one header { border-bottom: 3px solid var(--tan); padding-bottom: 3pt; margin-bottom: 6pt; }
 .v-one .o-e { font-size: .8em; letter-spacing: .12em; text-transform: uppercase; color: #9A6B3F; font-weight: 700; }
 .v-one h1 { margin: 0; font-size: 1.6em; color: var(--green); font-family: Arial, Helvetica, sans-serif; }
@@ -227,4 +227,3 @@ body.shared-day .wrap { max-width: 1100px; }
 .v-one .o-l { font-size: .75em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #55625F; margin: 3pt 0 1pt; }
 .v-one .o-r span { color: #55625F; }
 .v-one .o-i { padding-left: 8pt; }
-.v-one.tall { height: auto; overflow: visible; }   /* too much for one page even at the smallest text: let it run on */
