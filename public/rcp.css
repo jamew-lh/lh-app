@@ -1,0 +1,88 @@
+/* RCP Pipe Lookup (Field Reference). From James's RCP_DATA.xlsx page, 11/18/2026. */
+:root{
+  --green:#004745; --green-2:#0A5A57; --green-ink:#00302E;
+  --tan:#D4A070; --tan-soft:#F5E8DA;
+  --ink:#17201F; --muted:#55625F; --line:#D5DBD9; --ground:#EEF1F0; --panel:#FFFFFF;
+  --bad:#B42318; --bad-soft:#FDECEA; --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ground);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;font-size:17px;-webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+button,input{font:inherit;color:inherit}
+a{color:var(--green)}
+.wrap{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+.cond{font-family:'Barlow Condensed','Barlow',sans-serif}
+
+/* Top bar */
+.bar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:10px;min-height:60px}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--green);font-weight:700;text-decoration:none;font-size:16px;min-height:44px}
+.back svg{width:22px;height:22px}
+.spacer{flex:1}
+.bar h1{margin:0;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:var(--green)}
+
+/* Hero */
+.hero{background:var(--green);color:#fff;border-bottom:6px solid var(--tan)}
+.hero .wrap{padding-top:22px;padding-bottom:24px}
+.eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--tan)}
+.hero h2{margin:4px 0 0;font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:700;line-height:1.05}
+.hero p{margin:6px 0 0;color:#CFE2DE;font-size:16px}
+
+/* Search + chips */
+main{flex:1}
+.tools{position:sticky;top:61px;z-index:5;background:var(--ground);padding:12px 0 10px}
+.search{position:relative}
+.search svg{position:absolute;left:14px;top:50%;width:20px;height:20px;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:13px 14px 13px 44px;font-size:18px;background:#fff;min-height:52px}
+.search input:focus{outline:3px solid rgba(212,160,112,.55);outline-offset:0;border-color:var(--green)}
+.chips{display:flex;gap:8px;margin-top:10px;align-items:center}
+.chip{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:6px 16px;font-size:15px;font-weight:600;min-height:38px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed=true]{background:var(--green);border-color:var(--green);color:#fff}
+.count{margin-left:auto;font-size:14px;color:var(--muted)}
+.err{background:var(--bad-soft);color:var(--bad);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:15px}
+.ok{color:var(--muted);font-size:14px;margin:8px 2px 0}
+
+.section-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:14px 2px 10px}
+.sizes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (min-width:620px){.sizes{grid-template-columns:repeat(6,1fr)}}
+.size{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 4px;min-height:60px;cursor:pointer;text-align:center;transition:transform .12s,border-color .12s}
+.size b{display:block;font-family:'Barlow Condensed',sans-serif;font-size:21px;color:var(--green);line-height:1.05}
+.size small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.size:active{transform:scale(.97)}
+@media (hover:hover){.size:hover{border-color:var(--green)}}
+.size.on{background:var(--green);border-color:var(--green)}
+.size.on b{color:#fff}.size.on small{color:#CFE2DE}
+
+/* Result */
+.pipehead{background:var(--green);color:#fff;border-radius:var(--radius);margin-top:18px;border-bottom:6px solid var(--tan);padding:18px 16px}
+.pipehead h2{margin:4px 0 0;font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:700;line-height:1}
+.pipehead .meta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:10px 14px;min-height:46px;font-weight:700;font-size:16px;cursor:pointer;text-decoration:none}
+.btn-tan{background:var(--tan);color:var(--green-ink)}
+.btn-light{background:#fff;color:var(--green)}
+.btn-soft{background:var(--ground);color:var(--green)}
+.btn svg{width:18px;height:18px}
+.pill{display:inline-block;border-radius:99px;padding:5px 12px;font-size:14px;font-weight:600;background:rgba(255,255,255,.14);color:#fff}
+
+.cards{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.card h3{margin:0;display:flex;align-items:center;gap:10px;padding:12px 14px;font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);border-bottom:1px solid var(--line);background:#FAFBFB}
+.card h3 .dot{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--tan-soft);color:var(--green)}
+.card h3 .dot svg{width:18px;height:18px}
+.drow{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
+.drow:first-child{border-top:0}
+.dlabel{color:var(--muted);font-size:15px;font-weight:600}
+.dval{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+.dval u{text-decoration:none;font-family:'Barlow',sans-serif;font-size:14px;font-weight:500;color:var(--muted);margin-left:4px}
+.truck{display:grid;grid-template-columns:repeat(3,1fr)}
+.truck div{padding:14px 10px;text-align:center;border-left:1px solid var(--line)}
+.truck div:first-child{border-left:0}
+.truck .dval{display:block;text-align:center;font-size:30px;color:var(--green)}
+.truck .dlabel{display:block;font-size:13px;margin-top:2px}
+.none{padding:14px;color:#98A2A0;font-style:italic}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:var(--radius);padding:30px 16px;text-align:center;color:var(--muted);margin-top:18px}
+.note{font-size:13px;color:var(--muted);margin:14px 4px 0}
+
+footer{background:var(--green-ink);color:#CFE2DE;margin-top:28px;font-size:14px}
+footer .wrap{padding-top:18px;padding-bottom:22px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+footer b{font-family:'Barlow Condensed',sans-serif;color:#fff;letter-spacing:.06em;text-transform:uppercase;font-size:16px}

@@ -89,6 +89,7 @@ const I = {
   vOwn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0"/><path d="M6.5 11h11v4a5.5 5.5 0 0 1-11 0z"/><path d="M12 14v2"/></svg>',
   vHonest: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11l3-3a2 2 0 0 1 2.8 0L15 10l3-1 3 3-6.5 6.5a2 2 0 0 1-2.8 0L3 9l3-3z"/></svg>',
   truck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h11v10H2zM13 9h4l4 4v3h-8"/><circle cx="6" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/></svg>',
+  pipe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="6" cy="12" rx="3" ry="6"/><path d="M6 6h12M6 18h12"/><ellipse cx="18" cy="12" rx="3" ry="6"/></svg>',
   car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h11l3 5h2v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5M5 12h14"/></svg>',
   camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
   check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -209,9 +210,10 @@ function greeting() {
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 
-function tile({ href, go, icon, title, sub, cls = '', external = false }) {
+function tile({ href, go, icon, title, sub, cls = '', external = false, same = false }) {
   const inner = `<span class="ic">${I[icon]}</span><span class="txt"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>${external ? I.ext : ''}`;
   if (go != null) return `<button class="tile ${cls}" data-go="${go}">${inner}</button>`;
+  if (same) return `<a class="tile ${cls}" href="${href}">${inner}</a>`;   // a page of this app, same tab
   return `<a class="tile ${cls}" href="${href}" target="_blank" rel="noopener">${inner}</a>`;
 }
 
@@ -240,6 +242,7 @@ function showHome() {
         ${tile({ href: LINKS.shoring, icon: 'shield', title: 'Shoring Tab Data', sub: 'All shields', cls: 'ref', external: true })}
         ${tile({ href: LINKS.jobsiteBases, icon: 'gps', title: 'Jobsite Bases', sub: 'GPS base coordinates', cls: 'ref', external: true })}
         ${tile({ go: 'vendors', icon: 'truck', title: 'Vendors', sub: 'Suppliers: call or get directions', cls: 'ref' })}
+        ${tile({ href: 'rcp.html', icon: 'pipe', title: 'RCP Pipe Data', sub: 'Wall, OD, weight and truck loads by size', cls: 'ref', same: true })}
       </div>
       <div class="section-title">Safety</div>
       <div class="safety">

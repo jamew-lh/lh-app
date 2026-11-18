@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#004745">
+<title>RCP Pipe Data · Lyons &amp; Hohl</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="rcp.css">
+</head>
+<body>
+<div class="bar"><div class="wrap">
+  <a class="back" href="/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Home</a>
+  <span class="spacer"></span><h1>RCP Pipe Data</h1>
+</div></div>
+
+<section class="hero"><div class="wrap">
+  <div class="eyebrow">Reference</div>
+  <h2>RCP Pipe Lookup</h2>
+  <p>Pick or type a size to see wall, OD, weight and truck loading.</p>
+</div></section>
+
+<main><div class="wrap">
+  <div class="tools">
+    <form class="search" id="f" autocomplete="off">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder='Type a size — 36, 24", or 29x45' aria-label="Pipe size">
+    </form>
+    <div class="chips">
+      <button class="chip" id="bRound" aria-pressed="true">Round</button>
+      <button class="chip" id="bEll" aria-pressed="false">Elliptical</button>
+      <span class="count" id="count"></span>
+    </div>
+    <div id="msg"></div>
+  </div>
+
+  <div class="section-title" id="sizesTitle">Round sizes</div>
+  <div class="sizes" id="sizes"></div>
+  <div id="out"></div>
+  <p class="note">Weight per piece = weight per foot × laying length (calculated). All other values from RCP_DATA.xlsx.</p>
+</div></main>
+
+<footer><div class="wrap"><b>Lyons &amp; Hohl</b><span>RCP Pipe Data</span></div></footer>
+
+<script src="rcp.js"></script>
+</body>
+</html>
