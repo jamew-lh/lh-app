@@ -140,6 +140,23 @@ export function byEquipmentType(a, b) {
 /** Sort a list of equipment record IDs, given a lookup of id → record. */
 export const sortEquipIds = (ids, lookup) => [...ids].sort((x, y) => byEquipmentType(lookup[x], lookup[y]));
 
+/**
+ * Hand a machine to one person on a crew (changes the crew list in place). Anyone else on the crew running it
+ * loses it. When it was dragged off another crew member's name (fromPid) and the new person was already running
+ * something, the two swap. Returns what it was before ({ was, took: [{ id, machine }] }) so it can be undone.
+ */
+export function giveMachine(crew, eid, toPid, fromPid = null) {
+  const to = (crew || []).find((a) => a.id === toPid);
+  if (!to || !eid) return null;
+  const was = to.machine || '';
+  const took = [];
+  for (const a of crew) if (a !== to && a.machine === eid) { took.push({ id: a.id, machine: a.machine }); a.machine = ''; }
+  to.machine = eid;
+  const from = fromPid && fromPid !== toPid ? crew.find((a) => a.id === fromPid) : null;
+  if (from && was && was !== eid) from.machine = was;
+  return { was, took };
+}
+
 export function stackCards(box, minWidth = 260, gap = 12) {
   if (!box) return;
   const loose = [...box.children].filter((c) => !c.classList.contains('mcol'));
