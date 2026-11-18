@@ -21,6 +21,7 @@ bases and never changes them. It runs on Netlify, like the other apps.
 - **Material Orders** button: anyone with **MATERIAL ACCESS** checked in the Employee List
 - **Daily Schedule (read-only)**: Superviser / SUP, Foreman, Management and Office see published days — the 2 before today, today, and the next 2 — without personal notes
 - **GPS Base Coordinates** on each job (Job Name List → **BASE CORD**): shown as entered, with a Directions button per base the app can read
+- **RCP Pipe Data** (Field Reference): `public/rcp.html` + `rcp.js` + `rcp.css`. Round and elliptical RCP sizes from RCP_DATA.xlsx; edit the `ROUND` / `ELL` tables at the top of `rcp.js`. Links like `rcp.html#rcp-36` or `#ell-29x45` open a size directly
 - People with the same last name (the Smokers) each sign in with their own PIN
 - **Daily Schedule** (Dispatch section): the drag-and-drop crew board, only for people with **Schedule Editor** checked in the Employee List (see the Daily Schedule section below)
 
