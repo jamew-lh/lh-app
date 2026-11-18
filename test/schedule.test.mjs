@@ -4,7 +4,7 @@ import { handle } from '../lib/app.mjs';
 import { clearCache, resetForceFresh } from '../lib/store.mjs';
 import { resetThrottle } from '../lib/auth.mjs';
 import { describeChanges, addWorkdays, cleanBoard } from '../lib/schedule.mjs';
-import { dayHtml, dayText, byEquipmentType, giveMachine } from '../public/schedule-view.js';
+import { dayHtml, dayText, byEquipmentType, giveMachine, onePageHtml } from '../public/schedule-view.js';
 import { fakeFetch, addScheduleCrew } from './fake-airtable.mjs';
 
 addScheduleCrew();
@@ -326,4 +326,41 @@ test('giveMachine: hand a machine to someone else on the crew', () => {
   giveMachine(c, 'ex1', 'bob', 'bob');
   assert.deepEqual(c.map((a) => a.machine), ['ex1', '', 'dz1']);
   assert.equal(giveMachine(c, 'ex1', 'nobody'), null);
+});
+
+test('one-page PDF: active sites with crew, trucks, subs, equipment and moves; no notes or side lists', () => {
+  const d = {
+    date: '2026-11-18',
+    board: {
+      jobs: ['j1', 'j2'],
+      people: {
+        j1: [{ id: 'p1', role: 'Foreman', machine: '', note: 'bring the laser' }, { id: 'p2', role: 'Operator', machine: 'e1' }],
+        LANDSCAPE: [{ id: 'p3', role: 'Laborer' }],
+        OFF: [{ id: 'p4' }], SHOP: [{ id: 'p5' }], DRIVERS: [{ id: 'p6' }],
+      },
+      equip: { j1: ['e1', 'e2'], j2: ['e3'] },
+      haul: { j1: [{ id: 'h', hauler: 'v1', trucks: 2, kind: 'Tri-axle', material: '2A' }] },
+      subs: { j1: [{ id: 's', sub: 's1', note: 'Pipe' }] },
+      jobNotes: { j1: 'Start at 6:30' },
+      moves: [{ what: '20 pcs RCP', from: 'Shop', to: 'Odessa' }],
+    },
+    people: { p1: { name: 'Nick H.' }, p2: { name: 'Jeff S.' }, p3: { name: 'Scott C.' }, p4: { name: 'Off Guy' }, p5: { name: 'Shop Guy' }, p6: { name: 'Jared E.' } },
+    jobs: { j1: { name: 'TOA III', number: '326227', address: '1 Main St', supervisor: 'Seth' }, j2: { name: 'Empty Job', number: '1' } },
+    equipment: { e1: { label: '340-01' }, e2: { label: 'D6K-01' }, e3: { label: 'X-1' } },
+    haulers: { v1: { name: 'Risbon' } }, subs: { s1: { name: 'JFC' } }, vacation: [{ person: 'p4' }],
+    eqMoves: [{ equipment: '730-05', from: 'TOA 3', to: 'Maple Inn', driver: 'Jared E', status: 'Scheduled' }],
+  };
+  const html = onePageHtml(d);
+  assert.match(html, /TOA III <small>326227<\/small>/);
+  assert.match(html, /Nick H\.<\/b> <span>Foreman<\/span>/);
+  assert.match(html, /Jeff S\.<\/b> <span>340-01<\/span>/);
+  assert.match(html, /Risbon ×2 Tri-axle · 2A/);
+  assert.match(html, /JFC · Pipe/);
+  assert.match(html, /Equipment<\/div><div class="o-r">D6K-01<\/div>/);   // the operated machine isn't listed twice
+  assert.match(html, /Landscaping Crew/);
+  assert.match(html, /Moves<\/h3><div class="o-r"><b>Jared E\.<\/b><\/div><div class="o-r o-i">730-05 TOA 3 → Maple Inn/);
+  assert.match(html, /20 pcs RCP/);
+  for (const gone of ['bring the laser', 'Start at 6:30', '1 Main St', 'Seth', 'Empty Job', 'X-1', 'Off Guy', 'Shop Guy', 'Vacation']) {
+    assert.ok(!html.includes(gone), `should leave off ${gone}`);
+  }
 });

@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds, giveMachine } from './schedule-view.js';
+import { dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds, giveMachine, onePageHtml } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -1091,6 +1091,35 @@ function printDay() {
   $('#sdPrint').innerHTML = dayHtml(viewData(), 'print');
   window.print();
 }
+// One-page PDF: Letter, portrait. Shrink the text until it fits (smallest 6.5pt), then open the print window.
+// The @page rule is added only for this print, so the regular Print / PDF keeps the browser's own page settings.
+const ONE_PAGE_MIN = 6.5;
+function printOnePage() {
+  const html = onePageHtml(viewData());
+  const probe = document.createElement('div');
+  probe.innerHTML = html;
+  const box = probe.firstElementChild;
+  box.classList.add('measure');
+  document.body.appendChild(box);
+  const fit = box.querySelector('.o-fit');
+  const over = () => fit.scrollHeight > box.clientHeight;
+  let size = 10;
+  while (over() && size > ONE_PAGE_MIN) { size -= 0.25; fit.style.fontSize = `${size}pt`; }
+  const fits = !over();
+  box.remove();
+  if (!fits && !window.confirm(`${short(S.date)} has too much to fit on one page, even with the smallest text. Print it on 2 pages?`)) return;
+  $('#sdPrint').innerHTML = html;
+  const out = $('#sdPrint .v-one');
+  $('.o-fit', out).style.fontSize = `${size}pt`;
+  if (!fits) out.classList.add('tall');
+  const page = document.createElement('style');
+  page.textContent = '@page { size: letter portrait; margin: 0.4in; }';
+  document.head.appendChild(page);
+  const title = document.title;
+  document.title = `LH Daily Schedule ${S.date}`;      // the PDF's suggested file name
+  window.addEventListener('afterprint', () => { page.remove(); document.title = title; }, { once: true });
+  window.print();
+}
 function linkState() {
   const d = S.day;
   if (!d?.token) return { live: false, text: 'Not published yet.' };
@@ -1105,6 +1134,7 @@ function openPublish() {
     <div class="sd-pub">
       <div class="sd-pubrow"><div><b>Email</b><p class="sd-muted">Copies the schedule, formatted for phones and computers. Paste it into an Outlook email to your usual list.</p></div><button class="sd-btn" id="pEmail">Copy for email</button></div>
       <div class="sd-pubrow"><div><b>Print or PDF</b><p class="sd-muted">Opens the print window. Choose “Save as PDF” to make a PDF.</p></div><button class="sd-btn" id="pPrint">Print / PDF</button></div>
+      <div class="sd-pubrow"><div><b>One-page PDF</b><p class="sd-muted">Sites with people on them, hired trucks, subs, equipment and moves on one Letter page, for your records or to send. Choose “Save as PDF” in the print window.</p></div><button class="sd-btn" id="pOne">One-page PDF</button></div>
       <div class="sd-pubrow"><div><b>Link for phones</b><p class="sd-muted">A read-only page anyone with the link can open, no sign-in. Works for ${4} days after you first publish. ${esc(ls.text)}</p>
         ${ls.live ? `<p class="sd-linkbox"><a href="${esc(ls.url)}" target="_blank" rel="noopener">${esc(ls.url)}</a></p>` : ''}</div>
         <div class="sd-col">
@@ -1119,6 +1149,7 @@ function openPublish() {
   const result = (html) => { $('#pResult', back).innerHTML = html; };
   $('#pEmail', back).addEventListener('click', async () => result(`<div class="sd-ok">${esc(await copyForEmail())}</div>`));
   $('#pPrint', back).addEventListener('click', () => { closeModal(); printDay(); });
+  $('#pOne', back).addEventListener('click', () => { closeModal(); printOnePage(); });
   const doPublish = async (textLink, btn) => {
     btn.disabled = true;
     try {
