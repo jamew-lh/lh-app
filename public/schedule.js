@@ -1094,26 +1094,30 @@ function printDay() {
 // One-page PDF: Letter, portrait. Shrink the text until it fits (smallest 6.5pt), then open the print window.
 // The @page rule is added only for this print, so the regular Print / PDF keeps the browser's own page settings.
 const ONE_PAGE_MIN = 6.5;
-function printOnePage() {
-  const html = onePageHtml(viewData());
-  const probe = document.createElement('div');
-  probe.innerHTML = html;
-  const box = probe.firstElementChild;
-  box.classList.add('measure');
-  document.body.appendChild(box);
+// Always one page: shrink the text to ONE_PAGE_MIN, then scale the whole page down if it still doesn't fit.
+function fitOnePage(box) {
   const fit = box.querySelector('.o-fit');
-  const over = () => fit.scrollHeight > box.clientHeight;
-  let size = 10;
+  let size = 10, scale = 1;
+  const over = () => fit.scrollHeight * scale > box.clientHeight;   // transform doesn't change scrollHeight
+  fit.style.fontSize = `${size}pt`;
   while (over() && size > ONE_PAGE_MIN) { size -= 0.25; fit.style.fontSize = `${size}pt`; }
-  const fits = !over();
-  box.remove();
-  if (!fits && !window.confirm(`${short(S.date)} has too much to fit on one page, even with the smallest text. Print it on 2 pages?`)) return;
-  $('#sdPrint').innerHTML = html;
-  const out = $('#sdPrint .v-one');
-  $('.o-fit', out).style.fontSize = `${size}pt`;
-  if (!fits) out.classList.add('tall');
+  for (let i = 0; i < 20 && over(); i++) {
+    scale = Math.max(0.2, Math.min(scale - 0.01, (box.clientHeight / fit.scrollHeight) * 0.99));
+    fit.style.width = `${100 / scale}%`;           // lay out wider, then shrink to the page width
+    fit.style.transform = `scale(${scale})`;
+  }
+  return { size, scale };
+}
+function printOnePage() {
+  $('#sdPrint').innerHTML = onePageHtml(viewData());
+  const box = $('#sdPrint .v-one');
+  const sp = $('#sdPrint');
+  sp.classList.add('measure');                       // lay it out off screen so it can be measured
+  fitOnePage(box);
+  sp.classList.remove('measure');
   const page = document.createElement('style');
-  page.textContent = '@page { size: letter portrait; margin: 0.4in; }';
+  page.textContent = `@page { size: letter portrait; margin: 0.4in; }
+    @media print { html, body, #app { margin: 0 !important; padding: 0 !important; min-height: 0 !important; height: auto !important; display: block !important; background: #fff !important; } }`;
   document.head.appendChild(page);
   const title = document.title;
   document.title = `LH Daily Schedule ${S.date}`;      // the PDF's suggested file name
