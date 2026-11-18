@@ -117,6 +117,53 @@ export function dayHtml(d, mode = 'page') {
 }
 
 /**
+ * The one-page PDF (Publish → One-page PDF): Letter, portrait, for the records and to send around.
+ * Only jobs with people on them (and the Landscaping Crew when it has people): crew with role and machine,
+ * hired trucks, subcontractors, other equipment. Then Moves. No personal notes, job notes, addresses,
+ * Off, Office / Shop or Vacation. Same data shape as dayHtml. Styles: .v-one in schedule.css.
+ */
+export function onePageHtml(d) {
+  const b = d.board || {};
+  const P = (id) => d.people[id]?.name || 'Unknown';
+  const Q = (id) => d.equipment[id]?.label || '?';
+  const line = (t, cls = '') => `<div class="o-r${cls}">${esc(t)}</div>`;
+  const label = (t, html) => (html ? `<div class="o-l">${t}</div>${html}` : '');
+  const person = (a) => {
+    const what = [a.role && a.role !== 'Operator' ? a.role : '', a.machine ? Q(a.machine) : ''].filter(Boolean).join(' · ');
+    return `<div class="o-r"><b>${esc(P(a.id))}</b>${what ? ` <span>${esc(what)}</span>` : ''}</div>`;
+  };
+
+  const blocks = [];
+  for (const jid of [...(b.jobs || []), 'LANDSCAPE']) {
+    const crew = b.people?.[jid] || [];
+    if (!crew.length) continue;                     // active sites only: someone is working there
+    const j = jid === 'LANDSCAPE' ? { name: SPECIAL.LANDSCAPE } : d.jobs[jid] || { name: 'Job' };
+    const operated = new Set(crew.map((a) => a.machine).filter(Boolean));
+    const eq = sortEquipIds((b.equip?.[jid] || []).filter((e) => !operated.has(e)), d.equipment).map(Q);
+    const haul = (b.haul?.[jid] || []).map((h) => line(haulText(h, d.haulers[h.hauler]?.name))).join('');
+    const subs = (b.subs?.[jid] || []).map((x) => line(subText(x, d.subs?.[x.sub]?.name))).join('');
+    const num = j.number && /^\d/.test(j.number) ? ` <small>${esc(j.number)}</small>` : '';
+    blocks.push(`<section><h3>${esc(j.name)}${num}</h3>${crew.map(person).join('')}`
+      + `${label('Hired trucks', haul)}${label('Subcontractors', subs)}${label('Equipment', eq.length ? line(eq.join(', ')) : '')}</section>`);
+  }
+  // Moves: each driver with their equipment moves under them, then other equipment moves, then material / other moves.
+  const eqMoves = d.eqMoves || [];
+  const claimed = new Set();
+  const drivers = (b.people?.DRIVERS || []).map((a) => {
+    const mine = movesForDriver(eqMoves, P(a.id));
+    mine.forEach((m) => claimed.add(m));
+    return `<div class="o-r"><b>${esc(P(a.id))}</b></div>${mine.map((m) => line(eqMoveText(m), ' o-i')).join('')}`;
+  }).join('');
+  const others = eqMoves.filter((m) => !claimed.has(m)).map((m) => line(eqMoveText(m, true))).join('');
+  const material = (b.moves || []).map((m) => line(otherMoveText(m))).join('');
+  if (drivers || others || material) {
+    blocks.push(`<section><h3>Moves</h3>${drivers}${label(drivers ? 'Other equipment moves' : 'Equipment moves', others)}${label('Material / other moves', material)}</section>`);
+  }
+  return `<div class="v-one"><div class="o-fit"><header><div class="o-e">Lyons &amp; Hohl · Daily Schedule</div><h1>${esc(longDate(d.date))}</h1></header>`
+    + `<div class="o-cols">${blocks.join('') || '<p>Nothing scheduled yet.</p>'}</div></div></div>`;
+}
+
+/**
  * Stacked columns: each card goes into the shortest column, so short cards don't leave
  * empty space under them (a plain grid makes every card in a row as tall as the tallest).
  * Order still runs left to right. Safe to call again (e.g. after the window is resized).
