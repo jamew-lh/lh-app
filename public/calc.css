@@ -1,0 +1,73 @@
+/* Field Calculators (Field Reference). From James's Field Calculators page, 11/18/2026. */
+html,body{margin:0;background:#EEF1F0;font-family:'Barlow',system-ui,sans-serif}
+.lhbar{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #D5DBD9}
+.lhbar .w{max-width:760px;margin:0 auto;padding:0 16px;display:flex;align-items:center;min-height:60px;gap:10px}
+.lhbar a{display:inline-flex;align-items:center;gap:4px;color:#004745;font-weight:700;text-decoration:none;font-size:16px;min-height:44px}
+.lhbar a svg{width:22px;height:22px}
+.lhbar h1{margin:0 0 0 auto;font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;color:#004745}
+#lhc{border-radius:0!important}
+.lhfoot{background:#00302E;color:#CFE2DE;font-size:14px}
+.lhfoot .w{max-width:760px;margin:0 auto;padding:18px 16px 22px;display:flex;justify-content:space-between}
+.lhfoot b{font-family:'Barlow Condensed',sans-serif;color:#fff;letter-spacing:.06em;text-transform:uppercase;font-size:16px}
+
+#lhc{--green:#004745;--green-ink:#00302E;--tan:#D4A070;--tan-soft:#F5E8DA;--ink:#17201F;--muted:#55625F;--line:#D5DBD9;--ground:#EEF1F0;--bad:#B42318;--bad-soft:#FDECEA;--radius:14px;
+  background:var(--ground);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;font-size:17px;line-height:1.35;text-align:left;border-radius:14px;overflow:hidden}
+#lhc,#lhc *{box-sizing:border-box}
+#lhc h2,#lhc h3,#lhc p{margin:0;letter-spacing:normal;text-transform:none}
+#lhc button,#lhc input,#lhc select{font:inherit;color:inherit;box-shadow:none;margin:0;text-transform:none;letter-spacing:normal}
+#lhc .wrap{width:100%;max-width:760px;margin:0 auto;padding:0 16px}
+#lhc .hero{background:var(--green);color:#fff;border-bottom:6px solid var(--tan);height:auto;min-height:0}
+#lhc .hero::before,#lhc .hero::after{display:none}
+#lhc .hero .wrap{padding-top:22px;padding-bottom:24px}
+#lhc .eyebrow{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.16em;text-transform:uppercase;color:var(--tan)}
+#lhc .hero h2{margin-top:4px;font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:700;line-height:1.05;color:#fff}
+#lhc .hero p{margin-top:6px;color:#CFE2DE;font-size:16px}
+#lhc .tabs{display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}
+#lhc .tabs::-webkit-scrollbar{display:none}
+#lhc .tab{flex:none;border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:8px 16px;font-size:16px;font-weight:700;min-height:42px;cursor:pointer;color:var(--muted)}
+#lhc .tab[aria-selected=true]{background:var(--green);border-color:var(--green);color:#fff}
+#lhc .section-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 2px 8px;display:flex;align-items:center;gap:10px}
+#lhc .section-title span{flex:1}
+#lhc .lnk{background:none;border:0;color:var(--green);font-family:'Barlow',sans-serif;font-size:14px;font-weight:700;letter-spacing:normal;text-transform:none;cursor:pointer;padding:6px 4px}
+#lhc .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+#lhc .card-h{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#FAFBFB;border-bottom:1px solid var(--line)}
+#lhc .card-h b{font-family:'Barlow Condensed',sans-serif;font-size:18px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);flex:1}
+#lhc .card-h .dot{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--tan-soft);color:var(--green);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:16px}
+#lhc .x{background:none;border:0;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer;padding:6px}
+#lhc .fields{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:12px 14px}
+#lhc .fields.two{grid-template-columns:repeat(2,1fr)}
+@media (min-width:620px){#lhc .fields{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}#lhc .fields.two{grid-template-columns:repeat(2,1fr)}}
+#lhc .fld{display:flex;flex-direction:column;gap:3px;min-width:0}
+#lhc .fld.full{grid-column:1/-1}
+#lhc .fld label{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lhc .fld input,#lhc .fld select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 10px;font-size:18px;background:#fff;min-height:48px}
+#lhc .fld select{padding-right:4px}
+#lhc .fld input:focus,#lhc .fld select:focus{outline:3px solid rgba(212,160,112,.55);outline-offset:0;border-color:var(--green)}
+#lhc .fld input.bad{border-color:var(--bad);background:var(--bad-soft)}
+#lhc .hint{font-size:12px;color:var(--muted);min-height:15px}
+#lhc .res{display:flex;flex-wrap:wrap;gap:4px 20px;padding:10px 14px 12px;border-top:1px solid var(--line);background:#FAFBFB}
+#lhc .res .r{display:flex;align-items:baseline;gap:5px}
+#lhc .res .r i{font-style:normal;font-size:13px;color:var(--muted);font-weight:600}
+#lhc .res .r b{font-family:'Barlow Condensed',sans-serif;font-size:23px;color:var(--ink);font-variant-numeric:tabular-nums}
+#lhc .res .r.key b{color:var(--green)}
+#lhc .res .wait{font-size:14px;color:#98A2A0;font-style:italic}
+#lhc .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:10px 14px;min-height:46px;font-weight:700;font-size:16px;cursor:pointer}
+#lhc .btn-add{width:100%;background:#fff;border:1.5px dashed var(--green);color:var(--green)}
+#lhc .btn-tan{background:var(--tan);color:var(--green-ink)}
+#lhc .btn-light{background:rgba(255,255,255,.14);color:#fff}
+#lhc .tot{background:var(--green);color:#fff;border-radius:var(--radius);border-bottom:6px solid var(--tan);padding:16px;margin-top:14px}
+#lhc .tot .eyebrow{margin-bottom:8px}
+#lhc .tgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 16px}
+@media (min-width:620px){#lhc .tgrid{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}}
+#lhc .tgrid div i{display:block;font-style:normal;font-size:13px;color:#CFE2DE;font-weight:600}
+#lhc .tgrid div b{font-family:'Barlow Condensed',sans-serif;font-size:32px;line-height:1.05;font-variant-numeric:tabular-nums;color:#fff}
+#lhc .tgrid div b u{text-decoration:none;font-family:'Barlow',sans-serif;font-size:14px;color:#CFE2DE;font-weight:500;margin-left:4px}
+#lhc .tgrid div.big b{color:var(--tan)}
+#lhc .tact{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+#lhc .chk{display:flex;align-items:center;gap:10px;padding:12px 14px;font-weight:600;cursor:pointer}
+#lhc .chk input{width:22px;height:22px;accent-color:var(--green)}
+#lhc .note{font-size:13px;color:var(--muted);margin:10px 4px 0}
+#lhc .formula{font-size:13px;color:var(--muted);padding:0 14px 12px}
+#lhc .pad{padding-bottom:22px}
+
+#lhc [hidden]{display:none!important}
