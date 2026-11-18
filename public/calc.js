@@ -27,6 +27,26 @@ function parseNum(v){ if(v==null||String(v).trim()==='') return null; const n=Nu
 const fmt=(n,d=2)=>n==null||isNaN(n)?'—':Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:d});
 const fmtFixed=(n,d=2)=>n==null||isNaN(n)?'—':Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
 const ftLabel=f=>{ if(f==null||isNaN(f)) return ''; const ft=Math.floor(f+1e-9), inch=Math.round((f-ft)*12*100)/100; return `= ${fmt(f,3)} ft`+(inch&&ft?` (${ft}' ${fmt(inch,2)}")`:''); };
+// Lengths are entered in two number boxes (feet + inches) so phones show the number pad.
+// The value is still stored as one string ("12' 6\"" or "12.5") so saved entries and the math stay the same.
+function splitFt(v){
+  v=String(v??'').trim(); if(v==='') return ['',''];
+  if(/^\d*\.?\d+$/.test(v)) return [v,''];
+  const f=parseFt(v); if(f==null||isNaN(f)) return [v,''];
+  const ft=Math.floor(f+1e-9); const inch=Math.round((f-ft)*12*100)/100;
+  return [String(ft), inch?String(inch):''];
+}
+function joinFt(ft,inch){
+  ft=String(ft??'').trim(); inch=String(inch??'').trim();
+  if(inch==='') return ft;
+  return `${ft===''?'0':ft}' ${inch}"`;
+}
+const NUM='inputmode="decimal" enterkeyhint="next"';
+function ftinHTML(attrs,val){
+  const [ft,inch]=splitFt(val);
+  return `<div class="ftin"><span class="u"><input ${attrs} data-part="ft" value="${esc(ft)}" placeholder="0" autocomplete="off" ${NUM} aria-label="feet"><i>ft</i></span>`+
+    `<span class="u"><input ${attrs} data-part="in" value="${esc(inch)}" placeholder="0" autocomplete="off" ${NUM} aria-label="inches"><i>in</i></span></div>`;
+}
 const stoneOpts=sel=>STONES.map(([n,t])=>`<option value="${n}"${n===sel?' selected':''}>${n} · ${t} t/cy</option>`).join('');
 const factor=n=>(STONES.find(s=>s[0]===n)||STONES[1])[1];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -34,31 +54,31 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 // ---------- tab definitions
 const TABS={
  stone:{label:'Stone',rowName:'Area',
-  fields:[{k:'L',label:'Length (ft)',t:'ft'},{k:'W',label:'Width (ft)',t:'ft'},{k:'H',label:'Height (ft)',t:'ft'},{k:'s',label:'Stone',t:'stone',full:true}],
+  fields:[{k:'L',label:'Length',t:'ft'},{k:'W',label:'Width',t:'ft'},{k:'H',label:'Height',t:'ft'},{k:'s',label:'Stone',t:'stone',full:true}],
   blank:()=>({L:'',W:'',H:'',s:'2B'}),
   calc(r){ const L=parseFt(r.L),W=parseFt(r.W),H=parseFt(r.H); if([L,W,H].some(x=>x==null||isNaN(x))) return null;
     const cf=L*W*H, cy=cf/27, t=cy*factor(r.s); return {res:[['CF',fmt(cf,1)],['CY',fmtFixed(cy)],['Tons',fmtFixed(t),1]],tot:{cf,cy,t}}; },
   formula:'L × W × H = CF · CF ÷ 27 = CY · CY × stone factor = Tons'},
  concrete:{label:'Concrete',rowName:'Pour',
-  fields:[{k:'L',label:'Length (ft)',t:'ft'},{k:'W',label:'Width (ft)',t:'ft'},{k:'H',label:'Height / thick',t:'ft',ph:'ft or 6"'}],
+  fields:[{k:'L',label:'Length',t:'ft'},{k:'W',label:'Width',t:'ft'},{k:'H',label:'Height / thick',t:'ft'}],
   blank:()=>({L:'',W:'',H:''}),
   calc(r){ const L=parseFt(r.L),W=parseFt(r.W),H=parseFt(r.H); if([L,W,H].some(x=>x==null||isNaN(x))) return null;
     const cf=L*W*H, cy=cf/27, lbs=cy*CONCRETE_LBS; return {res:[['CF',fmt(cf,1)],['CY',fmtFixed(cy),1],['Lbs',fmt(lbs,0)]],tot:{cf,cy,lbs}}; },
   formula:`L × W × H = CF · CF ÷ 27 = CY · CY × ${CONCRETE_LBS.toLocaleString()} = Lbs`},
  fabric:{label:'Fabric',rowName:'Area',
-  fields:[{k:'L',label:'Length (ft)',t:'ft'},{k:'W',label:'Width (ft)',t:'ft'},{k:'H',label:'Height (ft)',t:'ft'}],
+  fields:[{k:'L',label:'Length',t:'ft'},{k:'W',label:'Width',t:'ft'},{k:'H',label:'Height',t:'ft'}],
   blank:()=>({L:'',W:'',H:''}),
   calc(r){ const L=parseFt(r.L),W=parseFt(r.W),H=parseFt(r.H); if([L,W,H].some(x=>x==null||isNaN(x))) return null;
     const sf=2*L*W+2*L*H+2*W*H, sy=sf/9; return {res:[['SF',fmt(sf,1)],['SY',fmtFixed(sy),1]],tot:{sf,sy}}; },
   formula:'All six sides: 2(L×W) + 2(L×H) + 2(W×H) = SF · SF ÷ 9 = SY'},
  paving:{label:'Paving',rowName:'Area',
-  fields:[{k:'L',label:'Length (ft)',t:'ft'},{k:'W',label:'Width (ft)',t:'ft'},{k:'T',label:'Thickness (in)',t:'in'}],
+  fields:[{k:'L',label:'Length',t:'ft'},{k:'W',label:'Width',t:'ft'},{k:'T',label:'Thickness (in)',t:'in'}],
   blank:()=>({L:'',W:'',T:''}),
   calc(r,set){ const L=parseFt(r.L),W=parseFt(r.W),T=parseIn(r.T); if([L,W,T].some(x=>x==null||isNaN(x))) return null;
     const rate=num(set.rate,114); const sf=L*W, sy=sf/9, t=sy*T*rate/2000; return {res:[['SF',fmt(sf,1)],['SY',fmtFixed(sy)],['Tons',fmtFixed(t),1]],tot:{sf,sy,t}}; },
   formula:'L × W = SF · SF ÷ 9 = SY · SY × thickness (in) × lbs/SY/in ÷ 2,000 = Tons'},
  riprap:{label:'Rip-Rap',rowName:'Apron',
-  fields:[{k:'o',label:'Outlet #',t:'text'},{k:'D',label:'Stone depth (ft)',t:'ft'},{k:'L',label:'Length (ft)',t:'ft'},{k:'S',label:'Start width (ft)',t:'ft'},{k:'T',label:'Term. width (ft)',t:'ft'}],
+  fields:[{k:'o',label:'Outlet #',t:'text'},{k:'D',label:'Stone depth',t:'ft'},{k:'L',label:'Length',t:'ft'},{k:'S',label:'Start width',t:'ft'},{k:'T',label:'Term. width',t:'ft'}],
   blank:()=>({o:'',D:'',L:'',S:'',T:''}),
   calc(r){ const D=parseFt(r.D),L=parseFt(r.L),S=parseFt(r.S),T=parseFt(r.T); if([D,L,S,T].some(x=>x==null||isNaN(x))) return null;
     const B=(T-S)/2, cf=(S+B)*L*D, cy=cf/27, t=cy*RIPRAP_TPY; return {res:[['B',fmt(B,2)],['CF',fmt(cf,1)],['CY',fmtFixed(cy)],['Tons',fmtFixed(t),1]],tot:{cf,cy,t}}; },
@@ -88,11 +108,12 @@ function fieldHTML(t,f,r,i){
   const v=esc(r[f.k]);
   let input;
   if(f.t==='stone') input=`<select data-i="${i}" data-k="${f.k}">${stoneOpts(r[f.k])}</select>`;
-  else input=`<input data-i="${i}" data-k="${f.k}" value="${v}" placeholder="${f.ph||(f.t==='text'?'':'0')}" autocomplete="off" ${f.t==='text'?'':'inputmode="text"'}>`;
+  else if(f.t==='ft') input=ftinHTML(`data-i="${i}" data-k="${f.k}"`,r[f.k]);
+  else input=`<input data-i="${i}" data-k="${f.k}" value="${v}" placeholder="${f.ph||(f.t==='text'?'':'0')}" autocomplete="off" ${f.t==='text'?'':NUM}>`;
   return `<div class="fld${f.full?' full':''}"><label>${f.label}</label>${input}<span class="hint" id="lhc-h-${i}-${f.k}"></span></div>`;
 }
 function setField(label,id,val,ph,hint){
-  return `<div class="fld"><label>${label}</label><input data-set="${id}" value="${esc(val)}" placeholder="${ph}" autocomplete="off"><span class="hint">${hint||''}</span></div>`;
+  return `<div class="fld"><label>${label}</label><input data-set="${id}" value="${esc(val)}" placeholder="${ph}" autocomplete="off" ${NUM}><span class="hint">${hint||''}</span></div>`;
 }
 function drawPanel(){
   const k=S.tab, t=TABS[k], rows=S.rows[k], set=S.set[k];
@@ -109,7 +130,7 @@ function drawPanel(){
       <div class="fields" id="lhc-pipebox" ${set.pipe?'':'hidden'}>
         <div class="fld"><label>Pipe type</label><select data-set="ptype"><option${set.ptype==='RCP'?' selected':''}>RCP</option><option${set.ptype==='HDPE'?' selected':''}>HDPE</option></select><span class="hint"></span></div>
         <div class="fld"><label>Size</label><select data-set="psize">${sizeOpts(set.ptype,set.psize)}</select><span class="hint" id="lhc-od"></span></div>
-        <div class="fld"><label>Run length (ft)</label><input data-set="plen" value="${esc(set.plen)}" placeholder="0" autocomplete="off"><span class="hint" id="lhc-plh"></span></div>
+        <div class="fld"><label>Run length</label>${ftinHTML('data-set="plen"',set.plen)}<span class="hint" id="lhc-plh"></span></div>
         <div class="fld full"><label>Stone factor for pipe</label><select data-set="ps">${stoneOpts(set.ps)}</select><span class="hint"></span></div>
       </div>
       <div class="res" id="lhc-pres" ${set.pipe?'':'hidden'}></div>
@@ -128,14 +149,15 @@ function sizeOpts(type,sel){ const T=type==='HDPE'?HDPE_OD:RCP_OD; return Object
 
 function bind(){
   const k=S.tab;
+  const pair=(el,sel)=>{ const box=el.closest('.ftin'); return joinFt(box.querySelector('[data-part=ft]').value, box.querySelector('[data-part=in]').value); };
   root.querySelectorAll('#lhc-panel [data-k]').forEach(el=>{
     const ev=el.tagName==='SELECT'?'change':'input';
-    el.addEventListener(ev,()=>{ S.rows[k][+el.dataset.i][el.dataset.k]=el.value; save(); update(); });
+    el.addEventListener(ev,()=>{ S.rows[k][+el.dataset.i][el.dataset.k]=el.dataset.part?pair(el):el.value; save(); update(); });
   });
   root.querySelectorAll('#lhc-panel [data-set]').forEach(el=>{
     const ev=el.tagName==='SELECT'?'change':'input';
     el.addEventListener(ev,()=>{
-      S.set[k][el.dataset.set]=el.value;
+      S.set[k][el.dataset.set]=el.dataset.part?pair(el):el.value;
       if(el.dataset.set==='ptype'){ const T=el.value==='HDPE'?HDPE_OD:RCP_OD; if(!T[S.set[k].psize]) S.set[k].psize=Object.keys(T)[0]; save(); drawPanel(); return; }
       save(); update();
     });
@@ -155,12 +177,12 @@ function update(){
   const tot={}; let complete=0;
   rows.forEach((r,i)=>{
     t.fields.forEach(f=>{
-      const h=$(`#lhc-h-${i}-${f.k}`), el=root.querySelector(`#lhc-panel [data-i="${i}"][data-k="${f.k}"]`);
+      const h=$(`#lhc-h-${i}-${f.k}`), els=root.querySelectorAll(`#lhc-panel [data-i="${i}"][data-k="${f.k}"]`);
       if(!h||f.t==='stone'||f.t==='text') return;
       const v=r[f.k]; let txt='', bad=false;
       if(f.t==='ft'){ const x=parseFt(v); if(x!=null){ if(isNaN(x)){bad=true;txt='Not a length';} else if(/['"\s]/.test(String(v).trim())) txt=ftLabel(x); } }
       if(f.t==='in'){ const x=parseIn(v); if(x!=null){ if(isNaN(x)){bad=true;txt='Not a number';} else if(/'/.test(v)) txt=`= ${fmt(x,2)} in`; } }
-      h.textContent=txt; if(el) el.classList.toggle('bad',bad);
+      h.textContent=txt; els.forEach(el=>el.classList.toggle('bad',bad));
     });
     const out=t.calc(r,set), box=$(`#lhc-r-${i}`);
     if(!out){ box.innerHTML=`<span class="wait">Enter ${t.fields.filter(f=>f.t!=='stone'&&f.t!=='text').map(f=>f.label.replace(/ \(.*\)/,'').toLowerCase()).join(', ')}</span>`; return; }

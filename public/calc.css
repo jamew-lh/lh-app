@@ -71,3 +71,11 @@ html,body{margin:0;background:#EEF1F0;font-family:'Barlow',system-ui,sans-serif}
 #lhc .pad{padding-bottom:22px}
 
 #lhc [hidden]{display:none!important}
+
+/* feet + inches boxes (number pad on phones) */
+#lhc .ftin{display:flex;gap:6px}
+#lhc .ftin .u{flex:1;min-width:0;position:relative}
+#lhc .ftin .u input{padding-right:24px}
+#lhc .ftin .u i{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-style:normal;font-size:13px;font-weight:600;color:var(--muted);pointer-events:none}
+#lhc .fields:has(.ftin){grid-template-columns:repeat(2,1fr)}
+@media (min-width:620px){#lhc .fields:has(.ftin){grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}
