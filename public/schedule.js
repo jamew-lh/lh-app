@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds } from './schedule-view.js';
+import { dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds, giveMachine } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -458,7 +458,9 @@ function personChip(a, loc) {
   else if (st?.kind === 'txt') tag = `<span class="tag txt" title="Was: ${esc(st.was ? locName(st.was.loc) : 'not scheduled')}">txt</span>`;
   else if (st?.kind === 'sent') tag = '<span class="tag sent">sent ✓</span>';
   else if (st?.kind === 'same') tag = '<span class="tag same">same</span>';
-  const mach = a.machine ? `<span class="mach">${esc(eqLabel(a.machine))}</span>`
+  // The machine tag drags on its own: onto someone else on the crew (they swap if that person had one),
+  // back to Equipment to free it, or anywhere a machine can go.
+  const mach = a.machine ? `<span class="mach sd-mtag" data-drag data-eid="${a.machine}" data-loc="${loc}" data-from-pid="${a.id}" title="Drag to give ${esc(eqLabel(a.machine))} to someone else">${esc(eqLabel(a.machine))}</span>`
     : (a.role === 'Operator' && isJob(loc) ? '<span class="mach sd-pickm">pick machine</span>' : '');
   const role = a.role && a.role !== 'Operator' ? `<span class="role">${esc(a.role)}</span>` : '';
   return `<div class="sd-chip r-${esc(a.role || 'x')} ${v && !v.half ? 'flag' : ''}" data-drag data-pid="${a.id}" data-loc="${loc}"
@@ -615,7 +617,16 @@ function movePerson(pid, toLoc, beforePid) {
     });
   }
 }
-function moveEquip(eid, toLoc, ontoPid) {
+function moveEquip(eid, toLoc, ontoPid, fromPid) {
+  // Machine tag dragged from one crew member to another on the same job: hand it over (swap if they had one).
+  const from = fromPid && locOf(S.board, fromPid);
+  const onto = ontoPid && locOf(S.board, ontoPid);
+  if (from && onto && from.loc === toLoc && onto.loc === toLoc) {
+    giveMachine(S.board.people[toLoc], eid, ontoPid, fromPid);
+    if (!onto.a.role || onto.a.role === 'Laborer') onto.a.role = 'Operator';
+    changed();
+    return;
+  }
   takeEquip(eid);
   if (toLoc !== 'YARD') (S.board.equip[toLoc] = S.board.equip[toLoc] || []).push(eid);
   if (ontoPid) {
@@ -685,8 +696,9 @@ function startDrag(e) {
   if (e.button !== 0) return;
   const el = e.currentTarget;
   e.preventDefault();
+  e.stopPropagation();                             // a machine tag sits inside a person's name; drag just the tag
   const kind = el.dataset.pid ? 'person' : el.dataset.eid ? 'equip' : el.dataset.sid ? 'sub' : 'hauler';
-  drag = { el, kind, id: el.dataset.pid || el.dataset.eid || el.dataset.sid || el.dataset.hid, from: el.dataset.loc, x0: e.clientX, y0: e.clientY, ghost: null, target: null };
+  drag = { el, kind, id: el.dataset.pid || el.dataset.eid || el.dataset.sid || el.dataset.hid, from: el.dataset.loc, fromPid: el.dataset.fromPid || null, x0: e.clientX, y0: e.clientY, ghost: null, target: null };
   window.addEventListener('pointermove', moveDrag);
   window.addEventListener('pointerup', endDrag, { once: true });
 }
@@ -765,18 +777,20 @@ function endDrag() {
   clearOver();
   if (!d.ghost) {                                  // a click, not a drag
     if (d.kind === 'person' && d.from !== 'POOL') editPerson(d.id);
+    else if (d.fromPid) editPerson(d.fromPid);     // clicking a machine tag still opens that person
     return;
   }
   d.ghost.remove();
   d.el.classList.remove('dragging');
   const t = d.target;
   if (!t) return;
-  const ontoPid = t.onto && t.onto.dataset.pid !== d.id ? t.onto.dataset.pid : null;
+  const ontoPid = t.onto && t.onto.dataset.pid !== d.id && t.onto.dataset.pid !== d.fromPid ? t.onto.dataset.pid : null;
+  if (d.fromPid && t.kind === 'people' && !ontoPid) return;   // dropped back on the same person: nothing to do
   if (d.kind === 'person') movePerson(d.id, t.loc, t.slot?.before?.dataset.pid || null);
   else if (d.kind === 'hauler') editHaul(t.loc, null, d.id);
   else if (d.kind === 'sub') editSub(t.loc, null, d.id);
   else if (t.kind === 'equip') moveEquip(d.id, t.loc);
-  else moveEquip(d.id, t.loc, ontoPid);
+  else moveEquip(d.id, t.loc, ontoPid, d.fromPid);
 }
 function clearOver() {
   hideSlot();
@@ -844,11 +858,27 @@ function editPerson(pid) {
   wireQuick(back);
   $('#eSave', back).addEventListener('click', () => {
     a.role = $('#eRole', back).value;
-    if ($('#eMach', back)) a.machine = $('#eMach', back).value;
     a.note = $('#eNote', back).value.trim();
     const where = $('#eWhere', back).value;
+    const pick = $('#eMach', back) ? $('#eMach', back).value : a.machine;
     closeModal();
-    if (where === hit.loc) { changed(); return; }
+    if (where === hit.loc) {
+      // Picking a machine someone else on the crew is running takes it off them (Undo puts it back).
+      const r = pick && pick !== a.machine ? giveMachine(S.board.people[hit.loc], pick, pid) : null;
+      if (!pick) a.machine = '';
+      changed();
+      if (r?.took.length) {
+        const names = r.took.map((x) => personName(x.id)).join(', ');
+        toast(`${eqLabel(pick)} taken from ${names}${names.endsWith('.') ? '' : '.'}`, 'Undo', () => {
+          for (const x of r.took) { const h = locOf(S.board, x.id); if (h) h.a.machine = x.machine; }
+          const me = locOf(S.board, pid);
+          if (me) me.a.machine = r.was;
+          changed();
+        });
+      }
+      return;
+    }
+    a.machine = pick;
     if (where.startsWith('add:')) addJob(where.slice(4));
     movePerson(pid, where.replace(/^add:/, ''));
   });

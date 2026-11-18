@@ -4,7 +4,7 @@ import { handle } from '../lib/app.mjs';
 import { clearCache, resetForceFresh } from '../lib/store.mjs';
 import { resetThrottle } from '../lib/auth.mjs';
 import { describeChanges, addWorkdays, cleanBoard } from '../lib/schedule.mjs';
-import { dayHtml, dayText, byEquipmentType } from '../public/schedule-view.js';
+import { dayHtml, dayText, byEquipmentType, giveMachine } from '../public/schedule-view.js';
 import { fakeFetch, addScheduleCrew } from './fake-airtable.mjs';
 
 addScheduleCrew();
@@ -305,4 +305,25 @@ test('read-only view: personal notes are left off; job notes stay', async () => 
   assert.equal(d.board.jobNotes.recJOB0000000006, 'Start at 6:30');
   assert.equal(d.board.sent, undefined);
   assert.ok(!JSON.stringify(d).includes('555-'));   // no phone numbers
+});
+
+test('giveMachine: hand a machine to someone else on the crew', () => {
+  const crew = () => [{ id: 'bob', machine: 'ex1' }, { id: 'joe', machine: '' }, { id: 'al', machine: 'dz1' }];
+  // Dragged off Bob onto Joe (who had nothing): Joe has it, Bob has nothing.
+  let c = crew();
+  assert.deepEqual(giveMachine(c, 'ex1', 'joe', 'bob'), { was: '', took: [{ id: 'bob', machine: 'ex1' }] });
+  assert.deepEqual(c.map((a) => a.machine), ['', 'ex1', 'dz1']);
+  // Dragged off Bob onto Al (who had a dozer): they swap.
+  c = crew();
+  giveMachine(c, 'ex1', 'al', 'bob');
+  assert.deepEqual(c.map((a) => a.machine), ['dz1', '', 'ex1']);
+  // Picked in Al's edit box (no drag): Al takes it from Bob, nobody gets the dozer back.
+  c = crew();
+  assert.deepEqual(giveMachine(c, 'ex1', 'al'), { was: 'dz1', took: [{ id: 'bob', machine: 'ex1' }] });
+  assert.deepEqual(c.map((a) => a.machine), ['', '', 'ex1']);
+  // Dropped back on Bob himself: nothing changes. Unknown person: nothing happens.
+  c = crew();
+  giveMachine(c, 'ex1', 'bob', 'bob');
+  assert.deepEqual(c.map((a) => a.machine), ['ex1', '', 'dz1']);
+  assert.equal(giveMachine(c, 'ex1', 'nobody'), null);
 });
