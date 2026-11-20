@@ -364,3 +364,46 @@ test('one-page PDF: active sites with crew, trucks, subs, equipment and moves; n
     assert.ok(!html.includes(gone), `should leave off ${gone}`);
   }
 });
+
+test('No work: saved with the day, skipped as the copy source, listed in "Start from", logged, and texted on request', async () => {
+  const a = await editor();
+  const wed = '2026-11-25'; const thu = '2026-11-26'; const fri = '2026-11-27'; const mon = '2026-11-30';
+  assert.equal((await call('PUT', `/api/schedule/day?date=${wed}`, { cookie: a.cookie, body: { board: board(), version: 0 } })).status, 200);
+  const off = await call('PUT', `/api/schedule/day?date=${thu}`, { cookie: a.cookie, body: { board: board({ noWork: { reason: ' Thanksgiving ' } }), version: 0 } });
+  assert.deepEqual(off.data.day.board.noWork, { reason: 'Thanksgiving' });
+  // Friday copies Wednesday, not the No work Thursday
+  const f1 = await call('GET', `/api/schedule/day?date=${fri}`, { cookie: a.cookie });
+  assert.equal(f1.data.prev.date, wed);
+  assert.deepEqual(f1.data.sources.map((s) => [s.date, s.noWork]), [[thu, true], [wed, false]]);
+  // a saved Friday is the usual copy for Monday; Start from… can still list Wednesday
+  await call('PUT', `/api/schedule/day?date=${fri}`, { cookie: a.cookie, body: { board: board(), version: 0 } });
+  const m = await call('GET', `/api/schedule/day?date=${mon}`, { cookie: a.cookie });
+  assert.equal(m.data.prev.date, fri);
+  assert.ok(m.data.sources.some((s) => s.date === wed));
+  const log = await call('GET', `/api/schedule/log?date=${thu}`, { cookie: a.cookie });
+  assert.match(log.data.log.map((l) => l.change).join('\n'), /Marked No work \(Thanksgiving\)/);
+  // No work text: only on a No work day, to the usual link list
+  assert.equal((await call('POST', `/api/schedule/no-work-text?date=${wed}`, { cookie: a.cookie })).status, 409);
+  const t = await call('POST', `/api/schedule/no-work-text?date=${thu}`, { cookie: a.cookie });
+  assert.equal(t.status, 200, JSON.stringify(t.data));
+  assert.ok(t.data.texted.sent.length > 0);
+  assert.match(f.texts.at(-1).text, /No work Thu, 11\/26 \(Thanksgiving\)/);
+  // turning it off is logged too
+  assert.equal(cleanBoard(board()).noWork, null);
+  assert.deepEqual(describeChanges(board({ noWork: { reason: '' } }), board()), ['Turned No work off']);
+});
+
+test('No work: link, email, text and one-page PDF say No work instead of the schedule', () => {
+  const d = {
+    date: '2026-11-26', jobs: { recJOB0000000006: { name: 'Sadsbury' } }, people: { p1: { name: 'Tony R.' } }, equipment: {}, haulers: {}, subs: {}, vacation: [],
+    board: { jobs: ['recJOB0000000006'], people: { recJOB0000000006: [{ id: 'p1', role: 'Foreman' }] }, equip: {}, jobNotes: {}, haul: {}, subs: {}, moves: [], noWork: { reason: 'Thanksgiving' } },
+  };
+  for (const html of [dayHtml(d, 'share'), dayHtml(d, 'email'), onePageHtml(d)]) {
+    assert.match(html, /No work — Thanksgiving/);
+    assert.doesNotMatch(html, /Tony R\./);
+  }
+  assert.match(dayText(d), /No work — Thanksgiving/);
+  assert.doesNotMatch(dayText(d), /Tony/);
+  d.board.noWork = { reason: '' };
+  assert.match(dayHtml(d, 'share'), />No work</);
+});

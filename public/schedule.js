@@ -8,7 +8,7 @@
 //   moves: [{ id, what, from, to, by, time, note }]   material / other moves (not tracked anywhere else)
 //   sent: { personId: { key, at } }               who was texted, and for which spot
 //   eqSyncAt: time of the last equipment-app location change applied to this day
-import { dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds, giveMachine, onePageHtml } from './schedule-view.js';
+import { noWorkText, dayHtml, dayText, haulText, subText, otherMoveText, mapLink, longDate, eqMoveText, movesForDriver, stackCards, byEquipmentType, sortEquipIds, giveMachine, onePageHtml } from './schedule-view.js';
 
 let C;
 export function initSchedule(ctx) { C = ctx; }
@@ -182,9 +182,12 @@ function dropRemovedPeople(b, date) {
   }
   return n;
 }
-function buildNewDay(date) {
-  if (S.prev) {
-    const b = normalize(clone(S.prev.board));
+// src: the saved day to copy (normally S.prev; "Start from…" passes another). S.prev stays the last
+// day actually worked, so the text flags still compare against what people were last told.
+function buildNewDay(date, src = S.prev) {
+  if (src) {
+    const b = normalize(clone(src.board));
+    b.noWork = null;
     b.sent = {};
     const removed = [];
     for (const [loc, list] of Object.entries(b.people)) {
@@ -205,14 +208,15 @@ function buildNewDay(date) {
       b.subs = {};
       removed.length = 0;
     }
-    const synced = syncEquipment(b, S.prev.board.eqSyncAt || S.prev.created, date);
+    const synced = syncEquipment(b, src.board.eqSyncAt || src.created, date);
     const moved = [...new Set([...synced, ...applyEquipmentMoves(b, S.moves)])];
     const msg = [weekend
-      ? `${short(date)} starts with empty crews. Jobs and machines are copied from ${short(S.prev.date)}; drag in who's working. Monday will copy the last weekday, not this day.`
-      : `Started ${short(date)} as a copy of ${short(S.prev.date)}. Just move what changes.`];
+      ? `${short(date)} starts with empty crews. Jobs and machines are copied from ${short(src.date)}; drag in who's working. Monday will copy the last weekday, not this day.`
+      : `Started ${short(date)} as a copy of ${short(src.date)}. Just move what changes.`];
     if (removed.length) msg.push(`<b>Taken off for vacation:</b> ${removed.map(esc).join(', ')}.`);
     if (moved.length) msg.push(`<b>Equipment moves from the equipment app:</b> ${moved.map(esc).join(', ')}.`);
     msg.push('Saved as soon as you change something.');
+    msg.push('<button class="sd-link" data-startfrom>Start from a different day…</button>');
     return { board: b, msg: msg.join(' ') };
   }
   // The very first day: jobs and equipment from the equipment app, no people yet.
@@ -297,7 +301,7 @@ export async function showSchedule(dateArg) {
   try {
     if (!S?.setup) S = { ...indexSetup(await C.api('schedule/setup')) };
     const r = await C.api(`schedule/day?date=${date}`);
-    Object.assign(S, { date, prev: r.prev, timeOff: r.timeOff, moves: r.moves, eqChanges: r.eqChanges || [], day: r.day, dirty: false });
+    Object.assign(S, { date, prev: r.prev, sources: r.sources || [], timeOff: r.timeOff, moves: r.moves, eqChanges: r.eqChanges || [], day: r.day, dirty: false });
     if (r.day?.board) {
       Object.assign(S, { board: normalize(r.day.board), version: r.day.version, isNew: false, banner: '' });
       const synced = syncEquipment(S.board, r.day.board.eqSyncAt || r.day.created, date);
@@ -358,19 +362,21 @@ function render(first = false) {
   <div class="sd-tools"><div class="sd-wrap">
     <div class="sd-datenav">
       <button class="sd-btn" data-day="-1" title="Previous workday" aria-label="Previous workday">◀</button>
-      <label class="sd-date"><b>${esc(longDate(S.date))}</b><input type="date" id="sdDate" value="${S.date}"></label>
+      <label class="sd-date"><b>${esc(longDate(S.date))}</b>${b.noWork ? '<span class="sd-nwtag">No work</span>' : ''}<input type="date" id="sdDate" value="${S.date}"></label>
       <button class="sd-btn" data-day="1" title="Next workday" aria-label="Next workday">▶</button>
       ${(() => { const j = satJump(S.date); return j ? `<button class="sd-btn" id="sdSat" data-date="${j.date}" title="Go ${j.back ? 'back ' : ''}to ${esc(short(j.date))}">${j.back ? '◀ Sat' : 'Sat'}</button>` : ''; })()}
     </div>
     <input type="search" id="sdQ" placeholder="Find a person or machine…" value="${esc(query)}">
     <span id="sdSave" class="sd-save">${esc(savedText())}</span>
     <span class="spacer"></span>
+    <button class="sd-btn${b.noWork ? ' nw-on' : ''}" id="sdNoWork" title="Holiday, weather or other day off">${b.noWork ? 'No work ✓' : 'No work'}</button>
+    ${!b.noWork && !S.day?.publishedAt ? '<button class="sd-btn" id="sdStartFrom" title="Rebuild this day as a copy of another saved day">Start from…</button>' : ''}
     <button class="sd-btn" id="sdHistory">History</button>
-    <button class="sd-btn" id="sdTexts">Texts <span class="sd-count ${tl.some((t) => t.kind === 'txt') ? 'on' : ''}">${tl.filter((t) => t.kind === 'txt').length}</span></button>
+    <button class="sd-btn" id="sdTexts" ${b.noWork ? 'disabled title="No crew texts on a No work day"' : ''}>Texts <span class="sd-count ${tl.some((t) => t.kind === 'txt') ? 'on' : ''}">${tl.filter((t) => t.kind === 'txt').length}</span></button>
     <button class="sd-btn primary" id="sdPublish">${S.day?.token && Date.parse(S.day.expires) > Date.now() ? 'Published ✓' : 'Publish'}</button>
   </div></div>
   ${S.banner ? `<div class="sd-wrap"><div class="sd-banner"><span>${S.banner}</span><button class="sd-link" id="sdBannerX">Dismiss</button></div></div>` : ''}
-  <div class="sd-wrap sd-main">
+  ${b.noWork ? noWorkPanel() : `<div class="sd-wrap sd-main">
     <section>
       <div class="sd-boardhead">
         <h2>Jobs <span>${b.jobs.length} on the board</span></h2>
@@ -381,7 +387,7 @@ function render(first = false) {
       <div class="sd-board">${b.jobs.map(jobCard).join('') || '<p class="sd-hint">No jobs on this day yet. Use “Add a job” above.</p>'}</div>
     </section>
     <aside class="sd-side">${sidebar()}</aside>
-  </div>
+  </div>`}
   <div id="sdPrint" class="sd-print"></div>`;
   stackCards($('.sd-board'), 260, 12);
   wire();
@@ -677,7 +683,7 @@ function wire() {
   $('#sdDate').addEventListener('change', (e) => goDate(e.target.value));
   $('#sdSat')?.addEventListener('click', (e) => goDate(e.currentTarget.dataset.date));
   $('#sdQ').addEventListener('input', (e) => { query = e.target.value; applySearch(true); });
-  $('#sdAddJob').addEventListener('change', (e) => {
+  $('#sdAddJob')?.addEventListener('change', (e) => {
     const id = e.target.value;
     if (!id) return;
     addJob(id);
@@ -688,6 +694,12 @@ function wire() {
   $('#sdTexts').addEventListener('click', openTexts);
   $('#sdPublish').addEventListener('click', openPublish);
   $('#sdHistory').addEventListener('click', openHistory);
+  $('#sdNoWork').addEventListener('click', editNoWork);
+  $('#nwEdit')?.addEventListener('click', editNoWork);
+  $('#nwOff')?.addEventListener('click', () => { S.board.noWork = null; changed(); toast('No work is off. The schedule is back.'); });
+  $('#nwText')?.addEventListener('click', textNoWork);
+  $('#sdStartFrom')?.addEventListener('click', openStartFrom);
+  $$('[data-startfrom]').forEach((el) => el.addEventListener('click', openStartFrom));
   const yq = $('#sdYardQ');
   if (yq) yq.addEventListener('input', () => { yard.q = yq.value; const pos = yq.selectionStart; render(); const n = $('#sdYardQ'); n.focus(); n.setSelectionRange(pos, pos); });
   $('#sdYardType')?.addEventListener('change', (e) => { yard.type = e.target.value; render(); });
@@ -1124,6 +1136,86 @@ function printOnePage() {
   window.addEventListener('afterprint', () => { page.remove(); document.title = title; }, { once: true });
   window.print();
 }
+// ------------------------------------------------------------------ No work + Start from…
+function noWorkPanel() {
+  const published = !!S.day?.publishedAt;
+  return `<div class="sd-wrap"><div class="sd-nowork">
+    <div class="sd-nwbig">${esc(noWorkText(S.board))}</div>
+    <p>Nobody is scheduled on ${esc(short(S.date))}. The phone link, email and PDFs say “No work”, and the next day copies the last day you worked instead of this one.</p>
+    <p class="sd-muted">Anything that was on this day is kept and hidden. Turn No work off to bring it back.</p>
+    <div class="sd-btns" style="justify-content:flex-start">
+      <button class="sd-btn" id="nwEdit">Change reason</button>
+      <button class="sd-btn" id="nwOff">Turn No work off</button>
+      ${published ? `<button class="sd-btn primary" id="nwText" ${S.setup.textsReady && S.setup.linkPeople ? '' : 'disabled'}>Text everyone: no work</button>` : ''}
+    </div>
+    ${published ? `<p class="sd-muted">This day was already published${S.day.textedAt ? ` and the link was texted ${esc(clock(S.day.textedAt))}` : ''}. The link now shows “No work”. The button texts the ${S.setup.linkPeople} people on the usual list.</p>` : ''}
+  </div></div>`;
+}
+function editNoWork() {
+  const cur = S.board.noWork;
+  const quick = ['Holiday', 'Weather', 'Rain', 'Snow', 'Company day off'];
+  const back = modal(`<h3>No work ${esc(short(S.date))}</h3>
+    <p class="sd-muted">For a holiday, a weather day or any planned day off. Nothing on the board is deleted; it's hidden until you turn No work off.</p>
+    <label class="sd-field">Reason (optional; shows on the link, email and PDF)<input id="nwReason" maxlength="60" placeholder="e.g. Thanksgiving" value="${esc(cur?.reason || '')}"></label>
+    <div class="sd-quick">${quick.map((q) => `<button class="sd-pill" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <div class="sd-btns">${cur ? '<span class="left"><button class="sd-btn" id="nwModalOff">Turn No work off</button></span>' : ''}<button class="sd-btn" data-close>Cancel</button><button class="sd-btn primary" id="nwSave">${cur ? 'Save' : 'Mark No work'}</button></div>`);
+  const f = $('#nwReason', back);
+  $$('[data-q]', back).forEach((b) => b.addEventListener('click', () => { f.value = b.dataset.q; f.focus(); }));
+  $('#nwModalOff', back)?.addEventListener('click', () => { closeModal(); S.board.noWork = null; changed(); });
+  $('#nwSave', back).addEventListener('click', () => {
+    closeModal();
+    S.board.noWork = { reason: f.value.trim().slice(0, 60) };
+    S.banner = '';
+    changed();
+  });
+  setTimeout(() => f.focus(), 0);
+}
+async function textNoWork() {
+  const n = S.setup.linkPeople;
+  if (!window.confirm(`Text “${noWorkText(S.board)} ${short(S.date)}” to ${n} ${n === 1 ? 'person' : 'people'} now?`)) return;
+  const btn = $('#nwText');
+  if (btn) btn.disabled = true;
+  try {
+    await saveNow();
+    if (S.dirty) throw new Error('Could not save this day. Try again.');
+    const r = await C.api(`schedule/no-work-text?date=${S.date}`, { method: 'POST', body: {} });
+    const t = r.texted;
+    toast(`Texted ${t.sent.length}.${t.failed.length ? ` Not sent: ${t.failed.join(', ')}.` : ''}`);
+  } catch (err) {
+    if (err.message === 'signed-out') return;
+    toast(err.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+function openStartFrom() {
+  if (S.day?.publishedAt) { toast('This day is already published. Change it by editing the board.'); return; }
+  const list = (S.sources || []).filter((d) => !d.noWork);
+  const back = modal(`<h3>Start ${esc(short(S.date))} from a different day</h3>
+    <p class="sd-muted">Rebuilds this day as a copy of the day you pick. Vacations for ${esc(short(S.date))} are taken off and equipment moves are added, the same as a normal new day.${S.isNew ? '' : ' <b>Changes already made to this day are replaced.</b>'}</p>
+    <div class="sd-srclist">${list.length ? list.map((d) => `<button class="sd-src" data-src="${d.date}"><b>${esc(longDate(d.date))}</b>${d.date === S.prev?.date ? ' <span class="sd-muted">· the usual copy</span>' : ''}${d.published ? ' <span class="sd-muted">· published</span>' : ''}</button>`).join('') : '<p class="sd-hint">No other saved days in the 4 weeks before or 3 weeks after.</p>'}</div>
+    <div class="sd-btns"><button class="sd-btn" data-close>Cancel</button></div>`);
+  $$('[data-src]', back).forEach((b) => b.addEventListener('click', async () => {
+    const src = b.dataset.src;
+    if (!S.isNew && !window.confirm(`Replace everything on ${short(S.date)} with a copy of ${short(src)}?`)) return;
+    closeModal();
+    try {
+      await saveNow();
+      const date = S.date;
+      const r = await C.api(`schedule/day?date=${src}`);
+      if (S.date !== date) return;
+      if (!r.day?.board) throw new Error(`Nothing is saved for ${short(src)}.`);
+      const built = buildNewDay(date, { date: src, board: r.day.board, created: r.day.created });
+      S.board = normalize(built.board);
+      S.banner = built.msg;
+      changed();
+    } catch (err) {
+      if (err.message === 'signed-out') return;
+      toast(err.message);
+    }
+  }));
+}
+
 function linkState() {
   const d = S.day;
   if (!d?.token) return { live: false, text: 'Not published yet.' };
