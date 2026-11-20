@@ -6,6 +6,9 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const GREEN = '#004745';
 const TAN = '#D4A070';
 
+/** "No work — Thanksgiving" for a day marked No work (board.noWork = { reason }), else ''. */
+export const noWorkText = (b) => (b?.noWork ? `No work${b.noWork.reason ? ` — ${b.noWork.reason}` : ''}` : '');
+
 const SPECIAL = { LANDSCAPE: 'Landscaping Crew', OFF: 'Off', SHOP: 'Office / Shop', DRIVERS: 'Drivers / Moves' };
 
 export function longDate(iso) {
@@ -110,10 +113,13 @@ export function dayHtml(d, mode = 'page') {
   const head = email
     ? `<div style="border-bottom:4px solid ${TAN};padding:0 0 8px;margin:0 0 12px"><div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:${TAN};font-weight:700">Lyons &amp; Hohl · Daily Schedule</div><div style="font-size:22px;font-weight:700;color:${GREEN}">${esc(longDate(d.date))}</div></div>`
     : `<header class="v-head"><div class="eyebrow">Lyons &amp; Hohl · Daily Schedule</div><h2>${esc(longDate(d.date))}</h2></header>`;
-  const body = blocks.join('') || para('Nothing scheduled yet.');
+  const nw = noWorkText(b);
+  const body = nw
+    ? (email ? `<div style="font-size:22px;font-weight:700;color:#92400E;background:#FEF3C7;border-radius:8px;padding:14px 16px">${esc(nw)}</div>` : `<div class="v-nowork">${esc(nw)}</div>`)
+    : blocks.join('') || para('Nothing scheduled yet.');
   return email
     ? `<div style="font-family:Arial,Helvetica,sans-serif;color:#17201F;max-width:640px">${head}${body}</div>`
-    : `<div class="v-day">${head}<div class="v-grid">${body}</div></div>`;
+    : `<div class="v-day">${head}${nw ? body : `<div class="v-grid">${body}</div>`}</div>`;
 }
 
 /**
@@ -160,7 +166,8 @@ export function onePageHtml(d) {
     blocks.push(`<section><h3>Moves</h3>${drivers}${label(drivers ? 'Other equipment moves' : 'Equipment moves', others)}${label('Material / other moves', material)}</section>`);
   }
   return `<div class="v-one"><div class="o-fit"><header><div class="o-e">Lyons &amp; Hohl · Daily Schedule</div><h1>${esc(longDate(d.date))}</h1></header>`
-    + `<div class="o-cols">${blocks.join('') || '<p>Nothing scheduled yet.</p>'}</div></div></div>`;
+    + (b.noWork ? `<div class="o-nowork">${esc(noWorkText(b))}</div></div></div>`
+      : `<div class="o-cols">${blocks.join('') || '<p>Nothing scheduled yet.</p>'}</div></div></div>`);
 }
 
 /**
@@ -232,6 +239,7 @@ export function dayText(d) {
   const b = d.board || {};
   const P = (id) => d.people[id]?.name || 'Unknown';
   const lines = [`L&H Daily Schedule — ${longDate(d.date)}`, ''];
+  if (b.noWork) return [...lines, noWorkText(b)].join('\n');
   const crew = (list) => (list || []).map((a) => `  ${P(a.id)}${a.role && a.role !== 'Operator' ? ` (${a.role})` : ''}${a.machine ? ` ${d.equipment[a.machine]?.label || ''}` : ''}${a.note ? ` — ${a.note}` : ''}`);
   for (const jid of [...(b.jobs || []), 'LANDSCAPE']) {
     const c = b.people?.[jid] || [];

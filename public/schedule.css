@@ -195,6 +195,7 @@ body.sd-dragging, body.sd-dragging * { cursor: grabbing !important; }
 .v-note { color: #92400E; }
 .v-jobnote { background: #FEF3C7; color: #92400E; border-radius: 6px; padding: 4px 8px; margin: 6px 0; font-size: 14px; }
 .v-line { font-size: 14.5px; margin: 2px 0; }
+.v-nowork { font-family: 'Barlow Condensed', sans-serif; font-size: 34px; font-weight: 700; color: #92400E; background: #FEF3C7; border-radius: 12px; padding: 22px 24px; margin: 12px 0; }
 .v-msg { padding: 40px 0; text-align: center; color: var(--muted); }
 .v-msg h2 { font-family: 'Barlow Condensed', sans-serif; color: var(--green); }
 .v-foot { color: var(--muted); font-size: 13px; margin: 16px 0 30px; }
@@ -226,4 +227,15 @@ body.shared-day .wrap { max-width: 1100px; }
 .v-one h3 small { font-weight: 400; color: #55625F; font-size: .85em; }
 .v-one .o-l { font-size: .75em; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #55625F; margin: 3pt 0 1pt; }
 .v-one .o-r span { color: #55625F; }
+.v-one .o-nowork { font-size: 2.4em; font-weight: 700; color: #92400E; background: #FEF3C7; border-radius: 8pt; padding: 16pt 18pt; margin-top: 12pt; }
 .v-one .o-i { padding-left: 8pt; }
+
+/* ---------- No work day + Start from… ---------- */
+.sd-nwtag { margin-left: 8px; background: #FEF3C7; color: #92400E; border-radius: 6px; padding: 1px 7px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.sd-btn.nw-on { background: #FEF3C7; border-color: #E8C46B; color: #92400E; }
+.sd-nowork { margin: 18px 0 30px; background: #fff; border: 1px solid var(--line); border-top: 5px solid #E8C46B; border-radius: 12px; padding: 20px 22px; max-width: 760px; }
+.sd-nowork p { margin: 8px 0; }
+.sd-nwbig { font-family: 'Barlow Condensed', sans-serif; font-size: 40px; font-weight: 700; color: #92400E; line-height: 1.1; }
+.sd-srclist { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow: auto; margin-top: 10px; }
+.sd-src { text-align: left; background: #fff; border: 1.5px solid var(--line); border-radius: 8px; padding: 9px 12px; font: inherit; font-size: 15px; color: var(--ink); cursor: pointer; }
+.sd-src:hover { border-color: var(--green); background: #F2F7F6; }
